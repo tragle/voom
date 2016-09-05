@@ -4,7 +4,7 @@ module.exports = function () {
   function identity (x) {return x;}
 
   return {
-    morph: identity,
+    morph: function() {return identity},
     version: version
   };
 
