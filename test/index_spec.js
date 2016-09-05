@@ -36,8 +36,8 @@ describe('morph', function() {
 
   it ('transforms simple values', function() {
     transform = voom.morph(1, 2);
-    result1 = transform(1);
-    resultA = transform('A');
+    var result1 = transform(1);
+    var resultA = transform('A');
 
     expect(result1).to.equal(2);
     expect(resultA).to.equal(undefined);
@@ -47,7 +47,25 @@ describe('morph', function() {
     resultA = null;
 
   });
+
+  it ('passes values through transforms', function() {
+    var doubler = function (x) {
+      if (x) return x * 2;
+    };
+    var stringer = function (x) {
+      if (x) return x.toString();
+    }
+    transform = voom.morph(2, doubler, stringer);
+    result = transform(2);
+
+    expect(result).to.equal("4");
     
+    doubler = null;
+    stringer = null;
+    transform = null;
+    result = null;
+
+  });
 
   it('transforms complex objects', function() {
     transform = voom.morph(schemaA, schemaB);

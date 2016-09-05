@@ -19,13 +19,17 @@ module.exports = function () {
 
   function transformer () {
     if (!arguments.length) return identity;
-    var args = Array.prototype.slice.call(arguments),
-      first = args[0],
-      last = args[args.length -1],
-      read = matcher(first),
-      write = writer(last),
-      chain = [read, write]; 
-    return lib.sequence.apply(this, chain);
+    var args = Array.prototype.slice.call(arguments);
+    function isFn (val) {return typeof val === 'function'}
+    function notFn (val) {return !isFn(val);}
+    var startValPos = lib.firstIndex(args, notFn);
+    var endValPos = lib.lastIndex(args, notFn);
+    var read = matcher(args[startValPos]);
+    var write = writer(args[endValPos]);
+    args.splice(startValPos, 0, read);
+    args.splice(endValPos, 0, write);
+    var chain = args.filter(isFn);
+    return lib.pipe.apply(this, chain);
   }
 
   function morph () {
@@ -40,3 +44,6 @@ module.exports = function () {
 
 }();
 
+
+// A B 1 C 2 D
+// 1 A B C 2 D
