@@ -15,14 +15,39 @@ describe('morph', function() {
   var transform, result;
 
   it('returns a function', function() {
-    transform = voom.morph(schemaA, schemaB);
-    result = transform(dataIn);
+    transform = voom.morph();
+    result = transform('abc');
 
     expect(typeof transform).to.equal('function');
 
     transform = null;
     result = null;
   });
+
+  it('returns identity if called with zero args', function() {
+    transform = voom.morph();
+    result = transform('abc');
+
+    expect(result).to.equal('abc');
+
+    transform = null;
+    result = null;
+  });
+
+  it ('transforms simple values', function() {
+    transform = voom.morph(1, 2);
+    result1 = transform(1);
+    resultA = transform('A');
+
+    expect(result1).to.equal(2);
+    expect(resultA).to.equal(undefined);
+
+    transform = null;
+    result1 = null;
+    resultA = null;
+
+  });
+    
 
   it('transforms complex objects', function() {
     transform = voom.morph(schemaA, schemaB);
