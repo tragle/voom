@@ -12,11 +12,11 @@ describe('version', function() {
   });
 });
 
-describe('morph', function() {
+describe('f', function() {
   var transform, result;
 
   it('returns a function', function() {
-    transform = voom.morph();
+    transform = voom.f();
     result = transform('abc');
 
     expect(typeof transform).to.equal('function');
@@ -26,7 +26,7 @@ describe('morph', function() {
   });
 
   it('returns identity if called with zero args', function() {
-    transform = voom.morph();
+    transform = voom.f();
     result = transform('abc');
 
     expect(result).to.equal('abc');
@@ -36,7 +36,7 @@ describe('morph', function() {
   });
 
   it ('transforms simple values', function() {
-    transform = voom.morph(1, 2);
+    transform = voom.f(1, 2);
     var result1 = transform(1);
     var resultA = transform('A');
 
@@ -56,7 +56,7 @@ describe('morph', function() {
     var stringer = function (x) {
       if (x) return x.toString();
     }
-    transform = voom.morph(2, doubler, stringer);
+    transform = voom.f(2, doubler, stringer);
     result = transform(2);
 
     expect(result).to.equal("4");
@@ -71,7 +71,7 @@ describe('morph', function() {
   it('transforms flat objects', function() {
     var s1 = {a: 'foo', b: 'bar'},
       s2 = {y: 'foo', z: 'bar'};
-    transform = voom.morph(s1, s2);
+    transform = voom.f(s1, s2);
     result = transform({a: 'abc', b: 'def'});
 
     expect(result).to.eql({y: 'abc', z: 'def'});
@@ -85,7 +85,7 @@ describe('morph', function() {
   it('transforms nested objects', function() {
     var s1 = {a: 'foo', b: {c: 'bar'}},
       s2 = {y: 'foo', z: 'bar'};
-    transform = voom.morph(s1, s2);
+    transform = voom.f(s1, s2);
     result = transform({a: 'abc', b: {c: 'def'}});
 
     expect(result).to.eql({y: 'abc', z: 'def'});
@@ -99,7 +99,7 @@ describe('morph', function() {
   it('transforms object collections', function() {
     var s1 = [{a: 'foo', b: 'bar'}],
       s2 = [{y: 'foo', z: 'bar'}];
-    transform = voom.morph(s1, s2);
+    transform = voom.f(s1, s2);
     result = transform([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
 
     assert.sameDeepMembers(result, [{y: 'abc', z: 'def'}, {y: 'ghi', z: 'jkl'}]);
@@ -113,7 +113,7 @@ describe('morph', function() {
   it('transforms value collections', function() {
     var s1 = [1],
       s2 = [3];
-    transform = voom.morph(s1, s2);
+    transform = voom.f(s1, s2);
     result = transform([1, 2, 3, 4, 5]);
 
     expect(result).to.eql([3]);
@@ -127,7 +127,7 @@ describe('morph', function() {
   it('transforms mixed objects', function() {
     var s1 = {a: 1, b: [{c: 2}], d: {e: [3]}}, 
       s2 = {v: 1, w: {x: [{y: 2}], z: [3]}};
-    transform = voom.morph(s1, s2);
+    transform = voom.f(s1, s2);
     result = transform({a: 9, b: [{c: 8}, {c: 9}], d: {e: [3, 4, 5]}})
 
     expect(result).to.eql({v: 9, w: {x: [{y: 9}, {y: 9}], d: {e: [3, 4, 5]}}});
@@ -139,7 +139,7 @@ describe('morph', function() {
   });
 
   xit('transforms complex objects', function() {
-    transform = voom.morph(schemaA, schemaB);
+    transform = voom.f(schemaA, schemaB);
     result = transform(dataIn);
 
     expect(result).to.eql(validResult);

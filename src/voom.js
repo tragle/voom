@@ -101,7 +101,7 @@ module.exports = function () {
   }
 
   return {
-    morph: morph,
+    f: morph,
     version: version
   };
 
