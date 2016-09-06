@@ -110,16 +110,19 @@ function indexMethods (obj) {
 exports.indexMethods = indexMethods;
 
 function pathFind (path) {
-  return function(obj) {
+  function run () {
     path = Array.prototype.slice.call(path);
-    while (p = path.shift()) {
-      if (isObject(obj[p])) {
-        return pathFind(path);
-      } else {
-        return obj[p];
+    return function find(obj) {
+      while (p = path.shift()) {
+        if (isObject(obj[p])) {
+          return find(obj[p]);
+        } else {
+          return obj[p];
+        }
       }
     }
   }
+  return run();
 }
 exports.pathFind = pathFind
 
