@@ -155,7 +155,11 @@ exports.pathAssign = pathAssign;
 
 function collect (fn) {
   return function(collection) {
-    return collection.map(fn);
+    return collection.reduce(function(prev, curr) {
+      var res = fn(curr);
+      if (res) return prev.concat(res);
+      if (!res) return prev;
+    }, []);
   }
 }
 exports.collect = collect;

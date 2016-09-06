@@ -96,13 +96,27 @@ describe('morph', function() {
     result = null;
   });
 
-  it('transforms collections', function() {
+  it('transforms object collections', function() {
     var s1 = [{a: 'foo', b: 'bar'}],
       s2 = [{y: 'foo', z: 'bar'}];
     transform = voom.morph(s1, s2);
     result = transform([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
 
     assert.sameDeepMembers(result, [{y: 'abc', z: 'def'}, {y: 'ghi', z: 'jkl'}]);
+
+    s1 = null;
+    s2 = null;
+    transform = null
+    result = null;
+  });
+
+  it('transforms value collections', function() {
+    var s1 = [1],
+      s2 = [3];
+    transform = voom.morph(s1, s2);
+    result = transform([1, 2, 3, 4, 5]);
+
+    expect(result).to.eql([3]);
 
     s1 = null;
     s2 = null;

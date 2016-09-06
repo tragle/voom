@@ -36,8 +36,9 @@ module.exports = function () {
   function arrayTransformer () {
     if (!arguments.length) return identity;
     var args = Array.prototype.slice.call(arguments);
-    var objTransform = objectTransformer.apply(null, lib.flatten(args));
-    return lib.collect(objTransform);
+    var transform = valueTransformer.apply(null, lib.flatten(args));
+    
+    return lib.collect(transform);
   }
 
   function objectTransformer () {
