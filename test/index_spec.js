@@ -124,6 +124,20 @@ describe('morph', function() {
     result = null;
   });
 
+  it('transforms mixed objects', function() {
+    var s1 = {a: 1, b: [{c: 2}], d: {e: [3]}}, 
+      s2 = {v: 1, w: {x: [{y: 2}], z: [3]}};
+    transform = voom.morph(s1, s2);
+    result = transform({a: 9, b: [{c: 8}, {c: 9}], d: {e: [3, 4, 5]}})
+
+    expect(result).to.eql({v: 9, w: {x: [{y: 9}, {y: 9}], d: {e: [3, 4, 5]}}});
+
+    s1 = null;
+    s2 = null;
+    transform = null
+    result = null;
+  });
+
   xit('transforms complex objects', function() {
     transform = voom.morph(schemaA, schemaB);
     result = transform(dataIn);
