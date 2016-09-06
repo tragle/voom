@@ -67,7 +67,21 @@ describe('morph', function() {
 
   });
 
-  it('transforms complex objects', function() {
+  it('transforms flat objects', function() {
+    var s1 = {a: 'foo', b: 'bar'},
+      s2 = {y: 'foo', z: 'bar'};
+    transform = voom.morph(s1, s2);
+    result = transform({a: 'abc', b: 'def'});
+
+    expect(result).to.eql({y: 'abc', z: 'def'});
+    
+    s1 = null;
+    s2 = null;
+    transform = null
+    result = null;
+  });
+
+  xit('transforms complex objects', function() {
     transform = voom.morph(schemaA, schemaB);
     result = transform(dataIn);
 
