@@ -110,19 +110,13 @@ function indexMethods (obj) {
 exports.indexMethods = indexMethods;
 
 function pathFind (path) {
-  function run () {
+  return function find(obj) {
     path = Array.prototype.slice.call(path);
-    return function find(obj) {
-      while (p = path.shift()) {
-        if (isObject(obj[p])) {
-          return find(obj[p]);
-        } else {
-          return obj[p];
-        }
-      }
+    for (var p in path) {
+      if (isObject(obj[path[p]])) return pathFind(path.slice(1))(obj[path[p]]);
+      return obj[path[p]];
     }
   }
-  return run();
 }
 exports.pathFind = pathFind
 
@@ -147,9 +141,10 @@ function pathAssign (path) {
   return function (val) {
     path = Array.prototype.slice.call(path);
     var key, leaf, leafKey, obj = {};
-    leaf = path.length ? getObj(leafKey = path.pop(), null) : {};
+    leaf = path.length ? getObj(leafKey = last(path), null) : {};
     obj = leaf;
-    while (key = path.pop()) {
+    for (var k in initial(path)) {
+      var key = path[k];
       obj = getObj(key, obj);
     }
     leaf[leafKey] = val;
@@ -167,7 +162,7 @@ exports.collect = collect;
 
 function merge(destination, source) {
 
-  function assign () {
+  function assign (destination, source) {
     for (var property in source) {
       if (isObject(source[property])) {
         destination[property] = destination[property] || {};
@@ -179,9 +174,14 @@ function merge(destination, source) {
     return destination;
   };
 
-  return assign();
+  return assign(destination, source);
 };
 exports.merge = merge;
 
-
+function flatten (list) {
+  return list.reduce(function (prev, curr) {
+    return prev.concat(curr);
+  }, []);
+}
+exports.flatten = flatten;
 

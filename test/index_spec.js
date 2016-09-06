@@ -1,4 +1,5 @@
 var expect = require('chai').expect;
+var assert = require('chai').assert;
 var voom = require('..');
 
 describe('version', function() {
@@ -89,6 +90,20 @@ describe('morph', function() {
 
     expect(result).to.eql({y: 'abc', z: 'def'});
     
+    s1 = null;
+    s2 = null;
+    transform = null
+    result = null;
+  });
+
+  it('transforms collections', function() {
+    var s1 = [{a: 'foo', b: 'bar'}],
+      s2 = [{y: 'foo', z: 'bar'}];
+    transform = voom.morph(s1, s2);
+    result = transform([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
+
+    assert.sameDeepMembers(result, [{y: 'abc', z: 'def'}, {y: 'ghi', z: 'jkl'}]);
+
     s1 = null;
     s2 = null;
     transform = null

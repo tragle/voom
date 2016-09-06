@@ -33,6 +33,13 @@ module.exports = function () {
     }
   }
 
+  function arrayTransformer () {
+    if (!arguments.length) return identity;
+    var args = Array.prototype.slice.call(arguments);
+    var objTransform = objectTransformer.apply(null, lib.flatten(args));
+    return lib.collect(objTransform);
+  }
+
   function objectTransformer () {
     if (!arguments.length) return identity;
     var args = Array.prototype.slice.call(arguments);
@@ -74,7 +81,9 @@ module.exports = function () {
     var startVal = args[startValPos];
     var endVal = args[endValPos];
     if (lib.isObject(startVal)) {
-      return objectTransformer.apply(this, arguments);
+      return objectTransformer.apply(null, arguments);
+    } else if (Array.isArray(startVal)) {
+      return arrayTransformer.apply(null, arguments);
     } else {
       read = matcher(startVal);
       write = writer(endVal);
