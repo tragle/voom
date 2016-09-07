@@ -1,15 +1,10 @@
 "use strict";
 
-// arguments -> args
-var args = exports.args = function () {
-  return Array.prototype.slice.call(arguments);
-};
-
 // val -> val
 var emitter = exports.emitter = function (val) {
   if (!val) return identity;
   return function(x) {
-    if (isVal(x)) return val;
+    if (isValue(x)) return val;
   }
 };
 
@@ -32,7 +27,7 @@ var isArray = exports.isArray = function (val) {
 
 // val -> Bool
 var isEmpty = exports.isEmpty = function (val) {
-  return !isValue(val) || (val.length && val.length === 0)  
+  return !isValue(val) || !!(val.length === 0);
 };
 
 // val -> Bool
@@ -52,7 +47,7 @@ var isObject = exports.isObject = function (val) {
 
 // val -> Bool
 var isPrimitive = exports.isPrimitive = function (val) {
-  return isNumber(val) || isString(val);
+  return isValue(val) && !isObject(val) && !isArray(val) && !isFunction(val);
 };
 
 // val -> Bool
@@ -62,7 +57,14 @@ var isUndefined = exports.isUndefined = function (val) {
 
 // val -> Bool
 var isValue = exports.isValue = function (val) {
-  return !isNaN(val) && !isNull(val) && !isUndefined(val);
+  return !isNull(val) && !isUndefined(val);
+};
+
+// [array], n -> item
+var last = exports.last = function (array, n) {
+  if (!array.length) return;
+  var len = n ? array.length - n : array.length - 1;
+  return Array.prototype.slice.call(array, len, array.length)
 };
 
 // fns -> fn
@@ -80,7 +82,7 @@ var pipe = exports.pipe = function () {
 
 // fns -> val -> val
 var racer = exports.racer = function () {
-  var fns = args(arguments);
+  var fns = Array.prototype.slice.call(arguments);
   return function (val) {
     var result;
     for (var i = 0; i < fns.length; i++) {
@@ -93,12 +95,48 @@ var racer = exports.racer = function () {
   };
 };
 
-// val -> val | void
-var values = exports.values = gate(isValue); 
-var empties = exports.empties = gate(isEmpty);
-var primitives = exports.primitives = gate(isPrimitive);
-var functions = exports.functions = gate(isFunction); 
-var arrays = exports.arrays = gate(isArray);
-var objects = exports.objects = gate(isObject);
+var traverse = exports.traverse = function (source, fn, target) {
+  target = target || {};
+  function visit (source, target, fn) {
+    for (var n in source) {
+      if (isObject(source[n])) {
+        visit(source[n], target, fn);
+      } else {
+        fn(source, target, n);
+      }
+    }
+  }
+  visit(source, target, fn);
+  return target;
+};
+
+var findReplace = exports.findReplace = function (obj, val, replacement) {
+  function visit(target) {
+    for (var n in target) {
+      if (target[n] === val) {
+        target[n] = replacement;
+        break;
+      }
+      if (isObject(target[n])) {
+        visit(target[n]);
+      }
+    }
+  }
+  visit(obj);
+  return obj;
+};
+
+function getAssigner(obj, key) {
+  return function (val) {
+    obj[key] = val;
+  };
+}
+
+var addAssigners = exports.addAssigners = function (reader, writer) {
+  traverse (writer, function (source, target, n) {
+    findReplace(reader, source[n], getAssigner(source, n));
+  }, writer);
+  return reader;
+};
 
 
