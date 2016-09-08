@@ -1,22 +1,39 @@
 var version = require('../package.json').version;
-var lib = require('./transforms.js');
+var lib = require('./lib.js');
+
 
 module.exports = function () {
 
-  var fPrimitive = lib.identity;
-  var fFuntion = lib.identity;
-  var fArray = lib.identity;
-  var fObject = lib.identity;
+  function getAssigner (obj, key) {
+    return function (val) {
+      obj[key] = val;
+    };
+  }
+
+  function indexSchemas (reader, writer) {
+    var index = {};
+    lib.traverse (writer, function (source, target, n) {
+      var path = lib.findPath(reader, source[n]);
+      index[path.join('')] = getAssigner(source, n)
+    }, writer);
+    return index;
+  };
+
+  function mapper (reader, writer) {
+    var index = indexSchemas (reader, writer) || {};
+    return function (input) {
+      lib.traverse(input, function(source, target, n, path) {
+        var writeFn = index[path.join('')];
+        if (lib.isFunction(writeFn)) writeFn(source[n]);
+      });
+    }
+  };
 
   function f () {
-    var parsers = [
-      lib.pipe(lib.isEmpty, lib.identity),
-      lib.pipe(lib.isPrimitive, fPrimitive),
-      lib.pipe(lib.isFunction, fFunction),
-      lib.pipe(lib.isArray, fArray),
-      lib.pipe(lib.isObject, fObject)
-    ];
-    return lib.race(parsers); 
+    var args = Array.prototype.slice.call(arguments);
+    if (!args.length) return lib.identity;
+    var reader = args[0], writer = lib.last(args);
+    if (lib.isObject(reader)) return mapper(reader, writer);
   }
 
   return {
@@ -26,8 +43,3 @@ module.exports = function () {
   };
 
 }();
-
-// isEmpty -> identity
-// isArray -> fArray 
-// isObject -> fObject
-// isValue -> fValue
