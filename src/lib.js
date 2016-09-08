@@ -1,5 +1,22 @@
 "use strict";
 
+// {obj} -> {obj}
+var clone = exports.clone = function (obj) {
+  function visit(obj, copy) {
+    for (var n in obj) {
+      if (typeof obj[n] === 'object') {
+        copy[n] = {};
+        visit(obj[n], copy[n]);
+      } else {
+        copy[n] = obj[n];
+      }
+    }
+    return copy;
+  }
+  return visit(obj, {});
+  return copy;
+};
+
 // val -> val 
 var identity = exports.identity = function (val) {
   return val;

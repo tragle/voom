@@ -26,6 +26,7 @@ module.exports = function () {
         var writeFn = index[path.join('')];
         if (lib.isFunction(writeFn)) writeFn(source[n]);
       });
+      return lib.clone(writer);
     }
   };
 
