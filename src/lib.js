@@ -14,7 +14,6 @@ var clone = exports.clone = function (obj) {
     return copy;
   }
   return visit(obj, {});
-  return copy;
 };
 
 // val -> val 

@@ -33,7 +33,7 @@ module.exports = function () {
   function f () {
     var args = Array.prototype.slice.call(arguments);
     if (!args.length) return lib.identity;
-    var reader = args[0], writer = lib.last(args);
+    var reader = args[0], writer = lib.last(args, 1)[0];
     if (lib.isObject(reader)) return mapper(reader, writer);
   }
 
