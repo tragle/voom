@@ -61,12 +61,19 @@ var isValue = exports.isValue = function (val) {
 };
 
 // [array], n -> item
-var last = exports.last = function (array, n) {
+var rest = exports.rest = function (array, n) {
   if (!array.length) return;
   var len = n ? array.length - n : array.length - 1;
   return Array.prototype.slice.call(array, len, array.length)
 };
 
+// [array], n -> item
+var initial = exports.initial = function (a, n) {
+  if (!a.length) return;
+  var len = n ? n : a.length - 1;
+  return Array.prototype.slice.call(a, 0, len);
+}
+  
 // fns -> fn
 var pipe = exports.pipe = function () {
   var fns = arguments;
@@ -110,33 +117,34 @@ var traverse = exports.traverse = function (source, fn, target) {
   return target;
 };
 
-var findReplace = exports.findReplace = function (obj, val, replacement) {
-  function visit(target) {
-    for (var n in target) {
-      if (target[n] === val) {
-        target[n] = replacement;
-        break;
+var findPath = exports.findPath = function (obj, val) {
+  var path = [];
+  function visit(source) {
+    for (var n in source) {
+      path.push(n);
+      if (source[n] === val) return true; 
+      if (isObject(source[n])) {
+        if (visit(source[n])) return true;
       }
-      if (isObject(target[n])) {
-        visit(target[n]);
-      }
+      path.pop();
     }
   }
   visit(obj);
-  return obj;
+  return path;
 };
 
-function getAssigner(obj, key) {
+function getAssigner (obj, key) {
   return function (val) {
     obj[key] = val;
   };
 }
-
-var addAssigners = exports.addAssigners = function (reader, writer) {
+ 
+var indexSchemas = exports.indexSchemas = function (reader, writer) {
+  var index = {};
   traverse (writer, function (source, target, n) {
-    findReplace(reader, source[n], getAssigner(source, n));
+    var path = findPath(reader, source[n]);
+    index[path.join('')] = getAssigner(source, n)
   }, writer);
-  return reader;
+
+  return index;
 };
-
-
