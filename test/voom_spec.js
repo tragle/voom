@@ -138,7 +138,7 @@ describe('f', function() {
     result = null;
   });
 
-  xit('transforms complex objects', function() {
+  it('transforms complex objects', function() {
     transform = voom.f(schemaA, schemaB);
     result = transform(dataIn);
 
