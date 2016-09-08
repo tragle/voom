@@ -104,13 +104,16 @@ var racer = exports.racer = function () {
 
 var traverse = exports.traverse = function (source, fn, target) {
   target = target || {};
+  var path = [];
   function visit (source, target, fn) {
     for (var n in source) {
+      path.push(n);
       if (isObject(source[n])) {
         visit(source[n], target, fn);
       } else {
-        fn(source, target, n);
+        fn(source, target, n, path.slice(0));
       }
+      path.pop();
     }
   }
   visit(source, target, fn);
@@ -145,6 +148,16 @@ var indexSchemas = exports.indexSchemas = function (reader, writer) {
     var path = findPath(reader, source[n]);
     index[path.join('')] = getAssigner(source, n)
   }, writer);
-
   return index;
+};
+
+var mapper = exports.mapper = function (reader, writer) {
+  var index = indexSchemas (reader, writer) || {};
+  return function (input) {
+    traverse(input, function(source, target, n, path) {
+      var writeFn = index[path.join('')];
+      if (isFunction(writeFn)) writeFn(source[n]);
+    });
+    return writer;
+  }
 };
