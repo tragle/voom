@@ -1,4 +1,4 @@
-var lib = require ('../src/transforms');
+var lib = require ('../src/lib');
 var expect = require('chai').expect;
 
 var result;

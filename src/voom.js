@@ -35,6 +35,7 @@ module.exports = function () {
     if (!args.length) return lib.identity;
     var reader = args[0], writer = lib.last(args, 1)[0];
     if (lib.isObject(reader)) return mapper(reader, writer);
+    if (lib.isArray(reader)) return lib.collector(mapper(reader[0], writer[0]));
   }
 
   return {

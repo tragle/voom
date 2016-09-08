@@ -16,6 +16,17 @@ var clone = exports.clone = function (obj) {
   return visit(obj, {});
 };
 
+var collector = exports.collector = function (fn) {
+  return function (array) {
+    var results = [];
+    if (!isArray(array)) return results;
+    for (var i = 0; i < array.length; i++) {
+      results.push(fn(array[i]));
+    }
+    return results;
+  };
+};
+
 // val -> val 
 var identity = exports.identity = function (val) {
   return val;
@@ -62,15 +73,16 @@ var isValue = exports.isValue = function (val) {
 };
 
 // {}, val -> [path]
-var findPath = exports.findPath = function (obj, val) {
+var findPath = exports.findPath = function (obj, val, includeArrays) {
   var path = [];
   function visit(source) {
     for (var n in source) {
       path.push(n);
       if (source[n] === val) return true; 
-      if (isObject(source[n])) {
+      if (isObject(source[n])) 
         if (visit(source[n])) return true;
-      }
+      if (includeArrays && isArray(source[n]))
+        if (visit(source[n])) return true;
       path.pop();
     }
   }
