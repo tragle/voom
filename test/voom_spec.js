@@ -134,6 +134,21 @@ describe('f', function() {
     result = null;
   });
 
+  it('takes an object and array schema', function () {
+    var s1 = {a: 'foo', b: 'bar'},
+      s2 = [{y: 'foo', z: 'bar'}];
+    fn = voom.f(s1, s2);
+
+    result = fn({a: 'abc', b: 'def'});
+
+    assert.sameDeepMembers(result, [{y: 'abc', z: 'def'}]);
+
+    s1 = null;
+    s2 = null;
+    fn = null
+    result = null;
+  });
+
   it('transforms object collections', function() {
     var s1 = [{a: 'foo', b: 'bar'}],
       s2 = [{y: 'foo', z: 'bar'}];

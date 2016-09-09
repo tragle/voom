@@ -34,9 +34,15 @@ module.exports = function () {
     var args = Array.prototype.slice.call(arguments);
     if (!args.length) return lib.identity;
     var reader = args[0], writer = args.length > 1 ? lib.last(args, 1)[0] : null;
-    if (lib.isArray(reader)) return lib.collector(f(reader[0], writer ? writer[0] : reader[0]));
-    if (lib.isObject(reader)) return mapper(reader, writer || reader);
-    if (lib.isValue(reader)) return lib.pipe(lib.gate(reader), writer ? lib.value(writer): lib.identity);
+    if (lib.isObject(reader)) return (lib.isArray(writer) ? 
+                                      lib.pipe(lib.toArray, f([reader], writer)) : 
+                                      mapper(reader, writer || reader));
+    if (lib.isArray(reader)) return (lib.collector(f(reader[0], writer ? 
+                                                     writer[0] : 
+                                                     reader[0])));
+    if (lib.isValue(reader)) return (lib.pipe(lib.gate(reader), writer ? 
+                                              lib.value(writer) : 
+                                              lib.identity));
   }
 
   return {
@@ -48,15 +54,3 @@ module.exports = function () {
 }();
 
 
-// value
-// object
-// array
-//
-// value:           gate(value)
-// value, value:    gate(value) -> value(value)
-//
-// object, object:  map(object, object)
-//
-// array[x], array[x]: collect(f(x, x))
-// array[x]
-//

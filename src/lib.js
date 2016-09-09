@@ -119,6 +119,13 @@ var pipe = exports.pipe = function () {
   }
 };
 
+// val -> [val]
+var toArray = exports.toArray = function (val) {
+  if (isUndefined(val) || isNull(val)) return [];
+  if (isArray(val)) return val;
+  return [val];
+};
+
 // {source}, fn({source}, {target}, n, [path]), {target} -> void 
 var traverse = exports.traverse = function (source, fn, target) {
   var path = [];
