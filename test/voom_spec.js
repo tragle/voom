@@ -77,7 +77,6 @@ describe('f', function() {
     stringer = null;
     fn = null;
     result = null;
-
   });
 
   it('takes a single object schema', function() {
