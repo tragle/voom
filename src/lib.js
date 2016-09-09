@@ -19,10 +19,11 @@ var clone = exports.clone = function (obj) {
 // fn -> fn([array])
 var collector = exports.collector = function (fn) {
   return function (array) {
-    var results = [];
+    var results = [], res;
     if (!isArray(array)) return results;
     for (var i = 0; i < array.length; i++) {
-      results.push(fn(array[i]));
+      res = fn(array[i]);
+      if (!isNull(res) && !isUndefined(res)) results.push(res);
     }
     return results;
   };

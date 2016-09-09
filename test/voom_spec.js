@@ -13,40 +13,52 @@ describe('version', function() {
 });
 
 describe('f', function() {
-  var transform, result;
+  var fn, result;
 
   it('returns a function', function() {
-    transform = voom.f();
-    result = transform('abc');
+    fn = voom.f();
+    result = fn('abc');
 
-    expect(typeof transform).to.equal('function');
+    expect(typeof fn).to.equal('function');
 
-    transform = null;
+    fn = null;
     result = null;
   });
 
   it('returns identity if called with zero args', function() {
-    transform = voom.f();
-    result = transform('abc');
+    fn = voom.f();
+    result = fn('abc');
 
     expect(result).to.equal('abc');
 
-    transform = null;
+    fn = null;
     result = null;
   });
 
+  it('takes a single value schema', function() {
+    fn = voom.f(1);
+    var result1 = fn(1);
+    var resultA = fn('A');
+
+    expect(result1).to.equal(1);
+    expect(resultA).to.equal(undefined);
+
+    fn = null;
+    result1 = null;
+    resultA = null;
+  });
+
   it ('transforms simple values', function() {
-    transform = voom.f(1, 2);
-    var result1 = transform(1);
-    var resultA = transform('A');
+    fn = voom.f(1, 2);
+    var result1 = fn(1);
+    var resultA = fn('A');
 
     expect(result1).to.equal(2);
     expect(resultA).to.equal(undefined);
 
-    transform = null;
+    fn = null;
     result1 = null;
     resultA = null;
-
   });
 
   it ('passes values through transforms', function() {
@@ -56,95 +68,121 @@ describe('f', function() {
     var stringer = function (x) {
       if (x) return x.toString();
     }
-    transform = voom.f(2, doubler, stringer);
-    result = transform(2);
+    fn = voom.f(2, doubler, stringer);
+    result = fn(2);
 
     expect(result).to.equal("4");
     
     doubler = null;
     stringer = null;
-    transform = null;
+    fn = null;
     result = null;
 
+  });
+
+  it('takes a single object schema', function() {
+    var s1 = {a: 'foo', b: 'bar'},
+    fn = voom.f(s1);
+
+    result = fn({a: 'abc', b: 'def'});
+
+    expect(result).to.eql({a: 'abc', b: 'def'});
+
+    s1 = null;
+    fn = null
+    result = null;
   });
 
   it('transforms flat objects', function() {
     var s1 = {a: 'foo', b: 'bar'},
       s2 = {y: 'foo', z: 'bar'};
-    transform = voom.f(s1, s2);
-    result = transform({a: 'abc', b: 'def'});
+    fn = voom.f(s1, s2);
+    result = fn({a: 'abc', b: 'def'});
 
     expect(result).to.eql({y: 'abc', z: 'def'});
     
     s1 = null;
     s2 = null;
-    transform = null
+    fn = null
     result = null;
   });
 
   it('transforms nested objects', function() {
     var s1 = {a: 'foo', b: {c: 'bar'}},
       s2 = {y: 'foo', z: 'bar'};
-    transform = voom.f(s1, s2);
-    result = transform({a: 'abc', b: {c: 'def'}});
+    fn = voom.f(s1, s2);
+    result = fn({a: 'abc', b: {c: 'def'}});
 
     expect(result).to.eql({y: 'abc', z: 'def'});
     
     s1 = null;
     s2 = null;
-    transform = null
+    fn = null
+    result = null;
+  });
+
+  it('takes a single array schema', function() {
+    var s1 = [{a: 'foo', b: 'bar'}];
+    fn = voom.f(s1);
+    result = fn([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
+
+    assert.sameDeepMembers(result, [{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
+
+    s1 = null;
+    s2 = null;
+    fn = null
     result = null;
   });
 
   it('transforms object collections', function() {
     var s1 = [{a: 'foo', b: 'bar'}],
       s2 = [{y: 'foo', z: 'bar'}];
-    transform = voom.f(s1, s2);
-    result = transform([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
+    fn = voom.f(s1, s2);
+    result = fn([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
 
     assert.sameDeepMembers(result, [{y: 'abc', z: 'def'}, {y: 'ghi', z: 'jkl'}]);
 
     s1 = null;
     s2 = null;
-    transform = null
+    fn = null
     result = null;
   });
 
   it('transforms value collections', function() {
     var s1 = [1],
       s2 = [3];
-    transform = voom.f(s1, s2);
-    result = transform([1, 2, 3, 4, 5]);
+    fn = voom.f(s1, s2);
+    result = fn([1, 2, 3, 4, 5]);
 
     expect(result).to.eql([3]);
 
     s1 = null;
     s2 = null;
-    transform = null
+    fn = null
     result = null;
   });
 
-  it('transforms mixed objects', function() {
+  xit('transforms mixed objects', function() {
     var s1 = {a: 1, b: [{c: 2}], d: {e: [3]}}, 
       s2 = {v: 1, w: {x: [{y: 2}], z: [3]}};
-    transform = voom.f(s1, s2);
-    result = transform({a: 9, b: [{c: 8}, {c: 9}], d: {e: [3, 4, 5]}})
+    fn = voom.f(s1, s2);
+    result = fn({a: 9, b: [{c: 8}, {c: 9}], d: {e: [3, 4, 5]}})
 
     expect(result).to.eql({v: 9, w: {x: [{y: 9}, {y: 9}], d: {e: [3, 4, 5]}}});
 
     s1 = null;
     s2 = null;
-    transform = null
+    fn = null
     result = null;
   });
 
-  it('transforms complex objects', function() {
-    transform = voom.f(schemaA, schemaB);
-    result = transform(dataIn);
+  xit('transforms complex objects', function() {
+    fn = voom.f(schemaA, schemaB);
+    result = fn(dataIn);
 
     expect(result).to.eql(validResult);
 
-    transform = null;
+    fn = null;
     result = null;
   });
 });
