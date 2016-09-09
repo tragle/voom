@@ -16,6 +16,7 @@ var clone = exports.clone = function (obj) {
   return visit(obj, {});
 };
 
+// fn -> fn([array])
 var collector = exports.collector = function (fn) {
   return function (array) {
     var results = [];
@@ -25,6 +26,31 @@ var collector = exports.collector = function (fn) {
     }
     return results;
   };
+};
+
+// {}, val -> [path]
+var findPath = exports.findPath = function (obj, val, includeArrays) {
+  var path = [];
+  function visit(source) {
+    for (var n in source) {
+      path.push(n);
+      if (source[n] === val) return true; 
+      if (isObject(source[n])) 
+        if (visit(source[n])) return true;
+      if (includeArrays && isArray(source[n]))
+        if (visit(source[n])) return true;
+      path.pop();
+    }
+  }
+  visit(obj);
+  return path;
+};
+
+// val -> input -> val | void
+var gate = exports.gate = function (val) {
+  return function (input) {
+    if (input === val) return val;
+  }
 };
 
 // val -> val 
@@ -72,29 +98,24 @@ var isValue = exports.isValue = function (val) {
   return !isNull(val) && !isUndefined(val);
 };
 
-// {}, val -> [path]
-var findPath = exports.findPath = function (obj, val, includeArrays) {
-  var path = [];
-  function visit(source) {
-    for (var n in source) {
-      path.push(n);
-      if (source[n] === val) return true; 
-      if (isObject(source[n])) 
-        if (visit(source[n])) return true;
-      if (includeArrays && isArray(source[n]))
-        if (visit(source[n])) return true;
-      path.pop();
-    }
-  }
-  visit(obj);
-  return path;
-};
-
 // [array], n -> [array]
 var last = exports.last = function (array, n) {
   if (!array.length) return;
   var len = n ? array.length - n : array.length - 1;
   return Array.prototype.slice.call(array, len, array.length)
+};
+
+// fns -> fn
+var pipe = exports.pipe = function () {
+  if (!arguments.length) return identity;
+  if (arguments.length === 1) return arguments[0];
+  var fns = arguments;
+  return function (x) {
+    for (var i = 0; i < fns.length; i++) {
+      x = fns[i](x);
+    }
+    return x;
+  }
 };
 
 // {source}, fn({source}, {target}, n, [path]), {target} -> void 
@@ -106,11 +127,18 @@ var traverse = exports.traverse = function (source, fn, target) {
       if (isObject(source[n])) {
         visit(source[n], target, fn);
       } else {
-        fn(source, target, n, path.slice(0));
+        fn(source, n, target, path.slice(0));
       }
       path.pop();
     }
   }
   visit(source, target, fn);
+};
+
+// val -> input -> val
+var value = exports.value = function (val) {
+  return function (input) {
+    if (!isUndefined(input) && !isNull(input)) return val;
+  }
 };
 
