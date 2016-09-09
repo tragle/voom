@@ -59,17 +59,39 @@ module.exports = function () {
       writer = args.length > 1 ? lib.last(args, 1)[0] : null,
       transforms = args.length > 2 ? args.slice(1, args.length - 1) : [];
 
-    if (lib.isFunction(reader) && args.length === 1) return reader; 
-    if (lib.isFunction(reader) && lib.isFunction(writer)) return lib.pipe(reader, getTransform(transforms), writer);
-    if (lib.isFunction(reader) && lib.isPrimitive(writer)) return lib.pipe(reader, getTransform(transforms), lib.value(writer));
-    if (lib.isObject(reader) && args.length === 1) return mapper(reader, reader);
-    if (lib.isObject(reader) && lib.isObject(writer)) return mapper(reader, writer, transforms);
-    if (lib.isObject(reader) && lib.isArray(writer)) return lib.pipe(lib.toArray, f([reader], writer));
-    if (lib.isArray(reader) && args.length === 1) return lib.collector(f(reader[0], reader[0]));
-    if (lib.isArray(reader) && lib.isArray(writer)) return lib.collector(f(reader[0], writer[0])); 
-    if (lib.isPrimitive(reader) && args.length === 1) return lib.gate(reader);
-    if (lib.isPrimitive(reader) && lib.isFunction(writer)) return lib.pipe(lib.gate(reader), getTransform(transforms), writer);
-    if (lib.isPrimitive(reader)) return lib.pipe(lib.gate(reader), getTransform(transforms), lib.value(writer));
+    if (lib.isFunction(reader) && args.length === 1) return (
+      reader);
+
+    if (lib.isFunction(reader) && lib.isFunction(writer)) return (
+      lib.pipe(reader, getTransform(transforms), writer));
+
+    if (lib.isFunction(reader) && lib.isPrimitive(writer)) return (
+      lib.pipe(reader, getTransform(transforms), lib.value(writer)));
+
+    if (lib.isObject(reader) && args.length === 1) return (
+      mapper(reader, reader));
+
+    if (lib.isObject(reader) && lib.isObject(writer)) return (
+      mapper(reader, writer, transforms));
+
+    if (lib.isObject(reader) && lib.isArray(writer)) return (
+      lib.pipe(lib.toArray, f([reader], writer)));
+
+    if (lib.isArray(reader) && args.length === 1) return (
+      lib.collector(f(reader[0], reader[0])));
+
+    if (lib.isArray(reader) && lib.isArray(writer)) return (
+      lib.collector(f(reader[0], writer[0])));
+
+    if (lib.isPrimitive(reader) && args.length === 1) return (
+      lib.gate(reader));
+
+    if (lib.isPrimitive(reader) && lib.isFunction(writer)) return (
+      lib.pipe(lib.gate(reader), getTransform(transforms), writer));
+
+    if (lib.isPrimitive(reader) && lib.isPrimitive(writer)) return (
+      lib.pipe(lib.gate(reader), getTransform(transforms), lib.value(writer)));
+
     throw Error("Invalid arguments " + args.toString());
   }
 

@@ -15,6 +15,22 @@ describe('version', function() {
 describe('f', function() {
   var fn, result;
 
+  it('throws an error when provided invalid arguments', function() {
+    var s1 = 2, s2 = {a: 2};
+    var didError = false;
+
+    try {
+      fn = voom.f(s1, s2);
+    } catch (e) {
+      if (e.message.indexOf('arguments') > -1) didError = true;
+    }
+
+    expect(didError).to.equal(true);
+
+    fn = null;
+
+  });
+
   it('returns a function', function() {
     fn = voom.f();
     result = fn('abc');
