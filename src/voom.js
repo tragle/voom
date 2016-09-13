@@ -8,7 +8,7 @@ module.exports = function () {
     lib.traverse (obj, function (source, n) {
       var path = lib.findPath(reader, source[n]),
         fn = lib.isFunction(source[n]) ? source[n] : lib.identity;
-      index[path.join('')] = fn; 
+      index[pathToKey(path)] = fn; 
     });
     return index;
   }
@@ -41,7 +41,7 @@ module.exports = function () {
   }
 
   function pathToKey (path) {
-    return path.join('');
+    return path.join(':%:');
   }
 
   function getMapIndex (reader, writer, transforms) {
@@ -122,7 +122,7 @@ module.exports = function () {
       var queue = [];
       writer = lib.nullify(writer);
       lib.traverse(input, function(source, n, target, path) {
-        var writeFn = index[path.join('')];
+        var writeFn = index[pathToKey(path)];
         if (lib.isFunction(writeFn) && writeFn.name === 'delayed')
           queue.push(writeFn, source[n]);
         if (lib.isFunction(writeFn)) writeFn(source[n]);
@@ -180,7 +180,6 @@ module.exports = function () {
 
   return {
     f: f,
-    lib: lib,
     version: version
   };
 
