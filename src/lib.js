@@ -1,12 +1,26 @@
 "use strict";
 
+// [array], [array] -> Bool
+var arraysAreEqual = exports.arraysAreEqual = function (arrayA, arrayB) {
+  if (arrayA.length !== arrayB.length) return false;
+  for (var i = 0; i < arrayA.length; i++) {
+    if (arrayA[i] !== arrayB[i]) return false;
+  }
+  return true;
+};
+
 // {obj} -> {obj}
 var clone = exports.clone = function (obj) {
   function visit(obj, copy) {
     for (var n in obj) {
-      if (typeof obj[n] === 'object') {
+      if (isObject(obj[n])) {
         copy[n] = {};
         visit(obj[n], copy[n]);
+      } else if (isArray(obj[n])) {
+        copy[n] = obj[n].map(function(item) {
+          if (isObject(item)) return clone(item);
+          return item;
+        });
       } else {
         copy[n] = obj[n];
       }
@@ -27,6 +41,24 @@ var collector = exports.collector = function (fn) {
     }
     return results;
   };
+};
+
+// fn -> delayed() -> fn
+var delay = exports.delay = function (fn) {
+  return function delayed () {
+    return fn;
+  }
+};
+
+// [source], [target], fn -> [results]
+var distribute = exports.distribute = function (source, target, fn) {
+  var factor = source.length / target.length,
+    results = [];
+  fn = fn || function (a, b) {return [a, b];};
+  for (var i = 0; i < target.length; i++) {
+    results = results.concat(fn(source[Math.floor(i * factor)], target[i]));
+  }
+  return results;
 };
 
 // {}, val -> [path]
@@ -52,6 +84,23 @@ var gate = exports.gate = function (val) {
   return function (input) {
     if (input === val) return val;
   }
+};
+
+// [[arrays]] -> [[groups]]
+var groupArrays = exports.groupArrays = function (arrays) {
+  var results = [], result, match;
+  arrays = arrays.slice(0);
+
+  while (arrays.length) {
+    match = arrays.shift();
+    result = [match];
+    for (var i in arrays) {
+      if (arraysAreEqual(arrays[i], match))
+        result = result.concat(arrays.splice(i, 1));
+    }
+    results.push(result);
+  }
+  return results;
 };
 
 // val -> val 
@@ -106,6 +155,14 @@ var last = exports.last = function (array, n) {
   return Array.prototype.slice.call(array, len, array.length)
 };
 
+// {obj} -> {obj}
+var nullify = exports.nullify = function (obj) {
+  traverse(obj, function(source, n) {
+    source[n] = isArray(source[n]) ? [] : null;
+  });
+  return obj
+};
+
 // fns -> fn
 var pipe = exports.pipe = function () {
   if (!arguments.length) return identity;
@@ -117,6 +174,13 @@ var pipe = exports.pipe = function () {
     }
     return x;
   }
+};
+
+// {obj}, [path]  -> value
+var readPath = exports.readPath = function (obj, path) {
+  if (!path.length) return;
+  if (path.length > 1) return readPath(obj[path[0]], path.slice(1));
+  return obj[path[0]];
 };
 
 // val -> [val]
@@ -141,12 +205,16 @@ var traverse = exports.traverse = function (source, fn, target) {
     }
   }
   visit(source, target, fn);
+  return target;
 };
 
 // val -> input -> val
 var value = exports.value = function (val) {
   return function (input) {
-    if (!isUndefined(input) && !isNull(input)) return val;
+    if (isValue(val) && isValue(input)) return val;
   }
 };
+
+
+
 

@@ -192,13 +192,14 @@ describe('f', function() {
     result = null;
   });
 
-  xit('transforms mixed objects', function() {
-    var s1 = {a: 1, b: [{c: 2}], d: {e: [3]}}, 
-      s2 = {v: 1, w: {x: [{y: 2}], z: [3]}};
+  it('transforms objects with collections', function() {
+    var s1 = {a: 1, b: [{c: 2}]},
+      s2 = {x: 1, y: [{z: 2}]};
     fn = voom.f(s1, s2);
-    result = fn({a: 9, b: [{c: 8}, {c: 9}], d: {e: [3, 4, 5]}})
 
-    expect(result).to.eql({v: 9, w: {x: [{y: 9}, {y: 9}], d: {e: [3, 4, 5]}}});
+    result = fn({a: 9, b: [{c: 8}, {c: 45}]});
+    
+    expect(result).to.eql({x: 9, y: [{z: 8}, {z: 45}]});
 
     s1 = null;
     s2 = null;
@@ -206,7 +207,37 @@ describe('f', function() {
     result = null;
   });
 
-  xit('transforms complex objects', function() {
+  it('transforms mixed objects', function() {
+    var s1 = {a: 1, b: [{c: 2}]}, 
+      s2 = {x: [{y: 1, z: 2}]};
+    fn = voom.f(s1, s2);
+
+    result = fn({a: 9, b: [{c: 8}, {c: 45}]});
+
+    expect(result).to.eql({x: [{y: 9, z: 8}, {y: 9, z: 45}]});
+
+    s1 = null;
+    s2 = null;
+    fn = null
+    result = null;
+  });
+
+  it('transforms multiple arrays', function() {
+    var s1 = {a: [{b: 1}], c: [{d: 2}]},
+      s2 = {x: [{y: 1, z: 2}]};
+    fn = voom.f(s1, s2);
+
+    result = fn({a: [{b: 101}, {b: 202}], c: [{d: 303}, {d: 404}]});
+
+    expect(result).to.eql({x: [{y: 101, z: 303}, {y: 202, z: 404}]});
+
+    s1 = null;
+    s2 = null;
+    fn = null
+    result = null;
+  });
+
+  it('transforms complex objects', function() {
     fn = voom.f(schemaA, schemaB);
     result = fn(dataIn);
 
@@ -224,12 +255,6 @@ var schemaA = {
     {
       name: 'Geometry',
       instructor: 'Smith',
-      grades: ['A-', 'C+', 'B']
-    },
-    {
-      name: 'Physical Education',
-      instructor: 'Hussein',
-      grades: ['B', 'B-', 'A']
     }
   ],
   number: '001248',
@@ -242,12 +267,6 @@ var schemaB = {
     {
       course: 'Geometry',
       student: 'Ziggy Ragle',
-      grades: ['A-', 'C+', 'B']
-    },
-    {
-      course: 'Physical Education',
-      student: 'Ziggy Ragle',
-      grades: ['B', 'B-', 'A']
     }
   ]
 }
@@ -283,21 +302,19 @@ var validResult = {
     {
       course: 'Art',
       student: 'Melissa Cromwell',
-      grades: ['A', 'A+']
     },
     {
       course: 'English',
       student:'Melissa Cromwell',
-      grades: ['B', 'B+']
     },
     {
       course: 'Home Economics',
-      student:'Lopez',
-      grades: ['C', 'C+']
+      student:'Melissa Cromwell',
     }
   ]
 }
     
+
 
 
 
