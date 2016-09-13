@@ -1,5 +1,7 @@
 # voom
 
+[![npm version](https://badge.fury.io/js/voom.svg)](https://badge.fury.io/js/voom)
+
 ## Quick start
 
 ```javascript
@@ -15,7 +17,6 @@ var result = transform({a: 'abc', b: {c: 'def'}});
 // {y: 'abc', z: 'def'}
 
 ```
-
 
 
 
