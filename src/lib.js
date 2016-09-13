@@ -1,32 +1,170 @@
-function identity (x) {return x;}
-exports.identity = identity;
+"use strict";
 
-function initial (a, n) {
-  if (!a.length) return;
-  var len = n ? n : a.length - 1;
-  return Array.prototype.slice.call(a, 0, len);
-}
-exports.initial = initial;
-  
-function last (a, n) {
-  if (!a.length) return;
-  var len = n ? a.length - n : a.length - 1;
-  return Array.prototype.slice.call(a, len, a.length)
-}
-exports.last = last;
+// [array], [array] -> Bool
+var arraysAreEqual = exports.arraysAreEqual = function (arrayA, arrayB) {
+  if (arrayA.length !== arrayB.length) return false;
+  for (var i = 0; i < arrayA.length; i++) {
+    if (arrayA[i] !== arrayB[i]) return false;
+  }
+  return true;
+};
 
-function compose (fns) {
-  return function (result) {
-    for (var i = fns.length - 1; i > -1; i--) {
-      result = fns[i].call(this, result);
+// {obj} -> {obj}
+var clone = exports.clone = function (obj) {
+  function visit(obj, copy) {
+    for (var n in obj) {
+      if (isObject(obj[n])) {
+        copy[n] = {};
+        visit(obj[n], copy[n]);
+      } else if (isArray(obj[n])) {
+        copy[n] = obj[n].map(function(item) {
+          if (isObject(item)) return clone(item);
+          return item;
+        });
+      } else {
+        copy[n] = obj[n];
+      }
     }
+    return copy;
+  }
+  return visit(obj, {});
+};
 
-    return result;
+// fn -> fn([array])
+var collector = exports.collector = function (fn) {
+  return function (array) {
+    var results = [], res;
+    if (!isArray(array)) return results;
+    for (var i = 0; i < array.length; i++) {
+      res = fn(array[i]);
+      if (!isNull(res) && !isUndefined(res)) results.push(res);
+    }
+    return results;
   };
-}
-exports.compose = compose;
+};
 
-function pipe () {
+// fn -> delayed() -> fn
+var delay = exports.delay = function (fn) {
+  return function delayed () {
+    return fn;
+  }
+};
+
+// [source], [target], fn -> [results]
+var distribute = exports.distribute = function (source, target, fn) {
+  var factor = source.length / target.length,
+    results = [];
+  fn = fn || function (a, b) {return [a, b];};
+  for (var i = 0; i < target.length; i++) {
+    results = results.concat(fn(source[Math.floor(i * factor)], target[i]));
+  }
+  return results;
+};
+
+// {}, val -> [path]
+var findPath = exports.findPath = function (obj, val, includeArrays) {
+  var path = [];
+  function visit(source) {
+    for (var n in source) {
+      path.push(n);
+      if (source[n] === val) return true; 
+      if (isObject(source[n])) 
+        if (visit(source[n])) return true;
+      if (includeArrays && isArray(source[n]))
+        if (visit(source[n])) return true;
+      path.pop();
+    }
+  }
+  visit(obj);
+  return path;
+};
+
+// val -> input -> val | void
+var gate = exports.gate = function (val) {
+  return function (input) {
+    if (input === val) return val;
+  }
+};
+
+// [[arrays]] -> [[groups]]
+var groupArrays = exports.groupArrays = function (arrays) {
+  var results = [], result, match;
+  arrays = arrays.slice(0);
+
+  while (arrays.length) {
+    match = arrays.shift();
+    result = [match];
+    for (var i in arrays) {
+      if (arraysAreEqual(arrays[i], match))
+        result = result.concat(arrays.splice(i, 1));
+    }
+    results.push(result);
+  }
+  return results;
+};
+
+// val -> val 
+var identity = exports.identity = function (val) {
+  return val;
+};
+
+// val -> Bool
+var isArray = exports.isArray = function (val) {
+  return Array.isArray(val);
+};
+
+// val -> Bool
+var isEmpty = exports.isEmpty = function (val) {
+  return !isValue(val) || !!(val.length === 0);
+};
+
+// val -> Bool
+var isFunction = exports.isFunction = function (val) {
+  return typeof val === 'function';
+};
+
+// val -> Bool
+var isNull = exports.isNull = function (val) {
+  return val === null;
+};
+
+// val -> Bool
+var isObject = exports.isObject = function (val) {
+  return !!val && val.constructor && val.constructor === Object;
+};
+
+// val -> Bool
+var isPrimitive = exports.isPrimitive = function (val) {
+  return isValue(val) && !isObject(val) && !isArray(val) && !isFunction(val);
+};
+
+// val -> Bool
+var isUndefined = exports.isUndefined = function (val) {
+  return val === void 0;
+};
+
+// val -> Bool
+var isValue = exports.isValue = function (val) {
+  return !isNull(val) && !isUndefined(val);
+};
+
+// [array], n -> [array]
+var last = exports.last = function (array, n) {
+  if (!array.length) return;
+  var len = n ? array.length - n : array.length - 1;
+  return Array.prototype.slice.call(array, len, array.length)
+};
+
+// {obj} -> {obj}
+var nullify = exports.nullify = function (obj) {
+  traverse(obj, function(source, n) {
+    source[n] = isArray(source[n]) ? [] : null;
+  });
+  return obj
+};
+
+// fns -> fn
+var pipe = exports.pipe = function () {
   if (!arguments.length) return identity;
   if (arguments.length === 1) return arguments[0];
   var fns = arguments;
@@ -36,156 +174,47 @@ function pipe () {
     }
     return x;
   }
-}
-exports.pipe = pipe;
+};
 
-function traverse (source, fn) {
-  var stack = [], target = {};
+// {obj}, [path]  -> value
+var readPath = exports.readPath = function (obj, path) {
+  if (!path.length) return;
+  if (path.length > 1) return readPath(obj[path[0]], path.slice(1));
+  return obj[path[0]];
+};
 
+// val -> [val]
+var toArray = exports.toArray = function (val) {
+  if (isUndefined(val) || isNull(val)) return [];
+  if (isArray(val)) return val;
+  return [val];
+};
+
+// {source}, fn({source}, {target}, n, [path]), {target} -> void 
+var traverse = exports.traverse = function (source, fn, target) {
+  var path = [];
   function visit (source, target, fn) {
     for (var n in source) {
-      stack.push(n);
-      if (typeof source[n] === 'object') {
+      path.push(n);
+      if (isObject(source[n])) {
         visit(source[n], target, fn);
       } else {
-        fn(target, source[n], stack.slice(0));
+        fn(source, n, target, path.slice(0));
       }
-      stack.pop();
+      path.pop();
     }
   }
-  
   visit(source, target, fn);
-
   return target;
-
-}
-exports.traverse = traverse;
-
-function firstIndex (list, pred) {
-  if (!list || !list.length) return;
-  if (!pred) return 0;
-  for (var i = 0; i < list.length; i++) {
-    if (pred(list[i])) return i;
-  }
-}
-exports.firstIndex = firstIndex;
-
-function lastIndex (list, pred) {
-  if (!list || !list.length) return;
-  if (!pred) return list.length - 1; 
-  for (var i = list.length - 1; i > -1; i--) {
-    if (pred(list[i])) return i;
-  }
-}
-exports.lastIndex = lastIndex;
-
-function isObject (val) {
-  return (
-    val !== null && val.constructor === Object && !Array.isArray(val)
-  );
-}
-exports.isObject = isObject;
-
-function indexPaths (obj) {
-
-  function update (target, val, path) {
-    target[val] = path;
-  }
-
-  return traverse (obj, update);
-}
-exports.indexPaths = indexPaths;
-
-function indexMethods (obj) {
-  if (!isObject(obj)) return obj;
-
-  function update (target, val, path) {
-    if (typeof val === 'function') { 
-      target[val] = val;
-    } 
-  }
-
-  return traverse (obj, update);
-}
-exports.indexMethods = indexMethods;
-
-function pathFind (path) {
-  return function find(obj) {
-    path = Array.prototype.slice.call(path);
-    for (var p in path) {
-      if (isObject(obj[path[p]])) return pathFind(path.slice(1))(obj[path[p]]);
-      return obj[path[p]];
-    }
-  }
-}
-exports.pathFind = pathFind
-
-function buildObj (fns) {
-  return function (input) {
-    var obj = {};
-    fns.forEach(function(fn) {
-      var frag = fn(input);
-      obj = merge(obj, frag);
-    });
-    return obj;
-  }
-}
-exports.buildObj = buildObj
-
-function pathAssign (path) {
-  function getObj (k, v) {
-    var o = {};
-    o[k] = v;
-    return o;
-  }
-  return function (val) {
-    path = Array.prototype.slice.call(path);
-    var key, leaf, leafKey, obj = {};
-    leaf = path.length ? getObj(leafKey = last(path), null) : {};
-    obj = leaf;
-    for (var k in initial(path)) {
-      var key = path[k];
-      obj = getObj(key, obj);
-    }
-    leaf[leafKey] = val;
-    return obj;
-  }
-}
-exports.pathAssign = pathAssign;
-
-function collect (fn) {
-  return function(collection) {
-    return collection.reduce(function(prev, curr) {
-      var res = fn(curr);
-      if (res) return prev.concat(res);
-      if (!res) return prev;
-    }, []);
-  }
-}
-exports.collect = collect;
-
-function merge(destination, source) {
-
-  function assign (destination, source) {
-    for (var property in source) {
-      if (isObject(source[property])) {
-        destination[property] = destination[property] || {};
-        assign(destination[property], source[property]);
-      } else {
-        destination[property] = source[property];
-      }
-    }
-    return destination;
-  };
-
-  return assign(destination, source);
 };
-exports.merge = merge;
 
-function flatten (list) {
-  return list.reduce(function (prev, curr) {
-    return prev.concat(curr);
-  }, []);
-}
-exports.flatten = flatten;
+// val -> input -> val
+var value = exports.value = function (val) {
+  return function (input) {
+    if (isValue(val) && isValue(input)) return val;
+  }
+};
+
+
+
 
