@@ -24,17 +24,9 @@ module.exports = function () {
     return lib.pipe.apply(null, fns);
   }
 
-
   function getAssigner (obj, key, transforms, delay) {
     var fn = getTransform(transforms, key);
     fn = lib.isFunction(fn) ? fn : lib.identity;
-    if (delay) {
-      return function (val) {
-        setTimeout(function() {
-          obj[key] = fn(val, obj, key);
-        }, 1);
-      }
-    }
     return function (val) {
       obj[key] = fn(val, obj, key);
     };
@@ -65,7 +57,7 @@ module.exports = function () {
             var topPath = pathGroups[0], 
               otherPaths = pathGroups.slice(1);
             if (topPath.length) 
-              index[pathToKey(topPath)] = getAssigner(source, n, [f(lib.readPath(reader, topPath), source[n])]);
+              index[pathToKey(topPath[0])] = getAssigner(source, n, [f(lib.readPath(reader, topPath[0]), source[n])]);
             for (var i in otherPaths) {
               if (otherPaths[i].length)
                 var mapFn = f(lib.readPath(reader, otherPaths[i])[0], source[n][0]);
@@ -103,7 +95,8 @@ module.exports = function () {
         }
       } else {
         var path = lib.findPath(reader, source[n]);
-        index[pathToKey(path)] = getAssigner(source, n, transforms)
+        var nodeTransform = lib.isFunction(source[n]) ? source[n] : [];
+        index[pathToKey(path)] = getAssigner(source, n, transforms.concat(nodeTransform));
       }
     }, {});
   }
@@ -111,7 +104,11 @@ module.exports = function () {
   function getPathsForObj (reader, obj) {
     var paths = {};
     for (var k in obj) {
-      paths[obj[k]] = lib.findPath(reader, obj[k], true);
+      var val = obj[k] ;
+      if (lib.isObject(val)) 
+        return getPathsForObj(reader, value);
+      if (lib.isFunction(val)) val = val.name;
+      paths[val] = lib.findPath(reader, val, true);
     }
     return paths;
   }
