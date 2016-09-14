@@ -36,62 +36,88 @@ module.exports = function () {
     return path.join(':%:');
   }
 
+  function getPaths (reader, obj) {
+    var targetPaths = getPathsForObj(reader, obj),
+      result = {arrays: [], nonArrays: []};
+    for (var tn in targetPaths) {
+      var depth = targetPaths[tn].filter(function(key) {
+        return key === "0";
+      }).length;
+      if (depth === 0) result.nonArrays.push(targetPaths[tn]);
+      if (depth === 1) result.arrays.push(targetPaths[tn].slice(0, targetPaths[tn].indexOf("0")));
+      if (depth > 1) throw new Error ("Unable to map nested arrays", "voom.js");
+    }
+    return result;
+  }
+
+  function indexArrayMap (index, indexKey, writer, writerKey, readerNode, writerArray) {
+    index[indexKey] = getAssigner(writer, writerKey, [f(readerNode, writerArray)]);
+  }
+
+  function indexArrayMerges (index, paths, source, n, reader, writer, transforms) {
+    for (var i in paths) {
+      if (paths[i].length)
+        var mapFn = f(lib.readPath(reader, paths[i])[0], source[n][0]);
+      var mergeFn = function (left, right) {
+        var newObj = mapFn(left);
+        return lib.traverse(newObj, function(source, n, target) {
+          if (!lib.isNull(source[n])) target[n] = source[n];
+        }, right);
+      };
+      index[pathToKey(paths[i][0])] = lib.delay(getAssigner(source, n, 
+        [function(readerColl) {
+          return lib.distribute(readerColl, source[n], mergeFn);
+        }]));
+    }
+  }
+
+  function indexNonArrayMaps (index, paths, source, n, reader, writer, transforms) {
+    for (var na in paths) {
+      var nonArrayPath = paths[na];
+      var readerVal = lib.readPath(reader, nonArrayPath);
+      var keyToWrite = function() {
+        for (var sn in source[n][0]) {
+          if (source[n][0][sn] === readerVal) return sn;
+        }
+      }();
+      var mapFn = function (val, obj, key) {
+        return obj[key].map(function(item) {
+          if (lib.isObject(item)) {
+            item[keyToWrite] = val;
+            return item;
+          }
+        });
+      };
+      var assigner = lib.delay(getAssigner(source, n, [mapFn]));
+      index[pathToKey(nonArrayPath)] = assigner;
+    } 
+  }
+
+  function getCollectionMapIndex (index, source, n, reader, writer, transforms) {
+    var paths = getPaths(reader, source[n]),
+      arrayPaths = paths.arrays,
+      nonArrayPaths = paths.nonArrays,
+      pathGroups = lib.groupArrays(arrayPaths).sort(function (a,b){
+        return b.length - a.length;
+      });
+    if (pathGroups.length) {
+      var topPath = pathGroups[0], 
+        otherPaths = pathGroups.slice(1);
+      if (topPath.length) 
+        indexArrayMap(index, pathToKey(topPath[0]), source, n, lib.readPath(reader, topPath[0]), source[n]);
+      if (otherPaths.length)
+        indexArrayMerges(index, otherPaths, source, n, reader, writer, transforms);
+    }
+    if (nonArrayPaths.length) {
+      indexNonArrayMaps (index, nonArrayPaths, source, n, reader, writer, transforms);
+    }
+  }
+
   function getMapIndex (reader, writer, transforms) {
     return lib.traverse (writer, function (source, n, index) {
       if (lib.isArray(source[n])) {
         if (lib.isObject(source[n][0])) {
-          var targetPaths = getPathsForObj(reader, source[n][0]),
-            sourceArrays = [], sourceNonArrays = [];
-          for (var tn in targetPaths) {
-            var depth = targetPaths[tn].filter(function(key) {
-              return key === "0";
-            }).length;
-            if (depth === 0) sourceNonArrays.push(targetPaths[tn]);
-            if (depth === 1) sourceArrays.push(targetPaths[tn].slice(0, targetPaths[tn].indexOf("0")));
-            if (depth > 1) throw new Error ("Unable to map nested arrays", "voom.js");
-          }
-          var pathGroups = lib.groupArrays(sourceArrays).sort(function (a,b){
-            return b.length - a.length;
-          });
-          if (pathGroups.length) {
-            var topPath = pathGroups[0], 
-              otherPaths = pathGroups.slice(1);
-            if (topPath.length) 
-              index[pathToKey(topPath[0])] = getAssigner(source, n, [f(lib.readPath(reader, topPath[0]), source[n])]);
-            for (var i in otherPaths) {
-              if (otherPaths[i].length)
-                var mapFn = f(lib.readPath(reader, otherPaths[i])[0], source[n][0]);
-                var mergeFn = function (left, right) {
-                  var newObj = mapFn(left);
-                  return lib.traverse(newObj, function(source, n, target) {
-                    if (!lib.isNull(source[n])) target[n] = source[n];
-                  }, right);
-                };
-                index[pathToKey(otherPaths[i][0])] = lib.delay(getAssigner(source, n, 
-                  [function(readerColl) {
-                    return lib.distribute(readerColl, source[n], mergeFn);
-                }]));
-            }
-          }
-        } 
-        for (var na in sourceNonArrays) {
-          var nonArrayPath = sourceNonArrays[na];
-          var readerVal = lib.readPath(reader, nonArrayPath);
-          var keyToWrite = function() {
-            for (var sn in source[n][0]) {
-              if (source[n][0][sn] === readerVal) return sn;
-            }
-          }();
-          var mapFn = function (val, obj, key) {
-            return obj[key].map(function(item) {
-              if (lib.isObject(item)) {
-                item[keyToWrite] = val;
-                return item;
-              }
-            });
-          };
-          var assigner = lib.delay(getAssigner(source, n, [mapFn]));
-          index[pathToKey(nonArrayPath)] = assigner;
+          getCollectionMapIndex(index, source, n, reader, writer, transforms);
         }
       } else {
         transforms = transforms || [];
@@ -107,7 +133,7 @@ module.exports = function () {
     for (var k in obj) {
       var val = obj[k] ;
       if (lib.isObject(val)) 
-        return getPathsForObj(reader, value);
+        return getPathsForObj(reader, val);
       if (lib.isFunction(val)) val = val.name;
       paths[val] = lib.findPath(reader, val, true);
     }

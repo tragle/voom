@@ -136,9 +136,28 @@ describe('f', function() {
     result = null;
   });
 
-  it('passes values through method transforms', function() {
+  it('passes values through reader method transforms', function() {
     function bar (val) {
       if ((val) === 'def') return 'DEF';
+    }
+
+    var s1 = {a: 'foo', b: {c: bar}},
+      s2 = {y: 'foo', z: 'bar'};
+    fn = voom.f(s1, s2);
+    result = fn({a: 'abc', b: {c: 'def'}});
+
+    expect(result).to.eql({y: 'abc', z: 'DEF'});
+ 
+    s1 = null;
+    s2 = null;
+    fn = null
+    result = null;
+  });
+
+  it('passes values through paired method transforms', function() {
+    function bar (val) {
+      if ((val) === 'def') return 'DEF';
+      if ((val) === 'DEF') return 'DDEEFF';
     }
 
     var s1 = {a: 'foo', b: {c: bar}},
@@ -146,7 +165,7 @@ describe('f', function() {
     fn = voom.f(s1, s2);
     result = fn({a: 'abc', b: {c: 'def'}});
 
-    expect(result).to.eql({y: 'abc', z: 'DEF'});
+    expect(result).to.eql({y: 'abc', z: 'DDEEFF'});
  
     s1 = null;
     s2 = null;
