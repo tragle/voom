@@ -94,6 +94,7 @@ module.exports = function () {
           index[pathToKey(nonArrayPath)] = assigner;
         }
       } else {
+        transforms = transforms || [];
         var path = lib.findPath(reader, source[n]);
         var nodeTransform = lib.isFunction(source[n]) ? source[n] : [];
         index[pathToKey(path)] = getAssigner(source, n, transforms.concat(nodeTransform));

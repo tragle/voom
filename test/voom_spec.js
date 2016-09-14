@@ -136,6 +136,24 @@ describe('f', function() {
     result = null;
   });
 
+  it('passes values through method transforms', function() {
+    function bar (val) {
+      if ((val) === 'def') return 'DEF';
+    }
+
+    var s1 = {a: 'foo', b: {c: bar}},
+      s2 = {y: 'foo', z: bar};
+    fn = voom.f(s1, s2);
+    result = fn({a: 'abc', b: {c: 'def'}});
+
+    expect(result).to.eql({y: 'abc', z: 'DEF'});
+ 
+    s1 = null;
+    s2 = null;
+    fn = null
+    result = null;
+  });
+
   it('takes a single array schema', function() {
     var s1 = [{a: 'foo', b: 'bar'}];
     fn = voom.f(s1);
