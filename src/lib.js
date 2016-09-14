@@ -68,6 +68,7 @@ var findPath = exports.findPath = function (obj, val, includeArrays) {
     for (var n in source) {
       path.push(n);
       if (source[n] === val) return true; 
+      if (isFunction(source[n]) && source[n].name === val) return true;
       if (isObject(source[n])) 
         if (visit(source[n])) return true;
       if (includeArrays && isArray(source[n]))
@@ -88,19 +89,24 @@ var gate = exports.gate = function (val) {
 
 // [[arrays]] -> [[groups]]
 var groupArrays = exports.groupArrays = function (arrays) {
-  var results = [], result, match;
+  var groups = [];
   arrays = arrays.slice(0);
 
   while (arrays.length) {
-    match = arrays.shift();
-    result = [match];
-    for (var i in arrays) {
-      if (arraysAreEqual(arrays[i], match))
-        result = result.concat(arrays.splice(i, 1));
+    var array = arrays.pop();
+    if (!groups.length) {
+      groups.push([array]);
+      continue
     }
-    results.push(result);
+    for (var i in groups) {
+      if (arraysAreEqual(array, groups[i][0])) {
+        groups[i].push(array);
+      } else {
+        groups.push([array]);
+      }
+    }
   }
-  return results;
+  return groups;
 };
 
 // val -> val 
