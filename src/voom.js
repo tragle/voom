@@ -24,16 +24,31 @@ module.exports = function () {
     return lib.pipe.apply(null, fns);
   }
 
-  function getAssigner (obj, key, transforms, delay) {
+  function getAssigner (obj, key, transforms) {
+    transforms = transforms || [];
+    var name = lib.isFunction(obj[key]) ? obj[key].name : key;
+    if (lib.isFunction(obj[key])) transforms.push(obj[key]);
     var fn = getTransform(transforms, key);
     fn = lib.isFunction(fn) ? fn : lib.identity;
     return function (val) {
-      obj[key] = fn(val, obj, key);
+      obj[name] = fn(val, obj, key);
     };
   }
 
   function pathToKey (path) {
     return path.join(':%:');
+  }
+
+  function getPathsForObj (reader, obj) {
+    var paths = {};
+    for (var k in obj) {
+      var val = obj[k] ;
+      if (lib.isObject(val)) 
+        return getPathsForObj(reader, val);
+      if (lib.isFunction(val)) val = val.name;
+      paths[val] = lib.findPath(reader, val, true);
+    }
+    return paths;
   }
 
   function getPaths (reader, obj) {
@@ -93,7 +108,7 @@ module.exports = function () {
     } 
   }
 
-  function getCollectionMapIndex (index, source, n, reader, writer, transforms) {
+  function indexCollection (index, source, n, reader, writer, transforms) {
     var paths = getPaths(reader, source[n]),
       arrayPaths = paths.arrays,
       nonArrayPaths = paths.nonArrays,
@@ -117,28 +132,15 @@ module.exports = function () {
     return lib.traverse (writer, function (source, n, index) {
       if (lib.isArray(source[n])) {
         if (lib.isObject(source[n][0])) {
-          getCollectionMapIndex(index, source, n, reader, writer, transforms);
+          indexCollection(index, source, n, reader, writer, transforms);
         }
       } else {
-        transforms = transforms || [];
         var path = lib.findPath(reader, source[n]);
-        var nodeTransform = lib.isFunction(source[n]) ? source[n] : [];
-        index[pathToKey(path)] = getAssigner(source, n, transforms.concat(nodeTransform));
+        index[pathToKey(path)] = getAssigner(source, n, transforms);
       }
     }, {});
   }
 
-  function getPathsForObj (reader, obj) {
-    var paths = {};
-    for (var k in obj) {
-      var val = obj[k] ;
-      if (lib.isObject(val)) 
-        return getPathsForObj(reader, val);
-      if (lib.isFunction(val)) val = val.name;
-      paths[val] = lib.findPath(reader, val, true);
-    }
-    return paths;
-  }
 
   function mapper (reader, writer, transforms) {
     var index = getMapIndex (reader, writer, transforms) || {};
