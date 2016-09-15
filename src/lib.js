@@ -64,15 +64,16 @@ var distribute = exports.distribute = function (source, target, fn) {
 // {}, val -> [path]
 var findPath = exports.findPath = function (obj, val, includeArrays) {
   var path = [];
+  val = isFunction(val) ? val.name : val;
   function visit(source) {
     for (var n in source) {
+      var sourceName = isFunction(source[n]) ? source[n].name : source[n];
       path.push(n);
-      if (source[n] === val) return true; 
-      if (isFunction(source[n]) && source[n].name === val) return true;
-      if (isObject(source[n])) 
-        if (visit(source[n])) return true;
-      if (includeArrays && isArray(source[n]))
-        if (visit(source[n])) return true;
+      if (sourceName === val) return true; 
+      if (isObject(sourceName)) 
+        if (visit(sourceName)) return true;
+      if (includeArrays && isArray(sourceName))
+        if (visit(sourceName)) return true;
       path.pop();
     }
   }

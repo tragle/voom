@@ -26,12 +26,11 @@ module.exports = function () {
 
   function getAssigner (obj, key, transforms) {
     transforms = transforms || [];
-    var name = lib.isFunction(obj[key]) ? obj[key].name : key;
     if (lib.isFunction(obj[key])) transforms.push(obj[key]);
     var fn = getTransform(transforms, key);
     fn = lib.isFunction(fn) ? fn : lib.identity;
     return function (val) {
-      obj[name] = fn(val, obj, key);
+      obj[key] = fn(val, obj, key);
     };
   }
 
@@ -71,18 +70,20 @@ module.exports = function () {
 
   function indexArrayMerges (index, paths, source, n, reader, writer, transforms) {
     for (var i in paths) {
-      if (paths[i].length)
-        var mapFn = f(lib.readPath(reader, paths[i])[0], source[n][0]);
-      var mergeFn = function (left, right) {
-        var newObj = mapFn(left);
-        return lib.traverse(newObj, function(source, n, target) {
-          if (!lib.isNull(source[n])) target[n] = source[n];
-        }, right);
-      };
-      index[pathToKey(paths[i][0])] = lib.delay(getAssigner(source, n, 
-        [function(readerColl) {
-          return lib.distribute(readerColl, source[n], mergeFn);
-        }]));
+      if (paths[i].length) {
+        var readerVal = lib.readPath(reader, paths[i])[0];
+        var mapFn = f(readerVal, source[n][0]);
+        var mergeFn = function (left, right) {
+          var newObj = mapFn(left);
+          return lib.traverse(newObj, function(source, n, target) {
+            if (!lib.isNull(source[n])) target[n] = source[n];
+          }, right);
+        };
+        index[pathToKey(paths[i][0])] = lib.delay(getAssigner(source, n, 
+          [function(readerColl) {
+            return lib.distribute(readerColl, source[n], mergeFn);
+          }]));
+      }
     }
   }
 
@@ -136,11 +137,12 @@ module.exports = function () {
         }
       } else {
         var path = lib.findPath(reader, source[n]);
+        var readerVal = lib.readPath(reader, path);
+        transforms = lib.isFunction(readerVal) ? transforms.concat(readerVal) : transforms;
         index[pathToKey(path)] = getAssigner(source, n, transforms);
       }
     }, {});
   }
-
 
   function mapper (reader, writer, transforms) {
     var index = getMapIndex (reader, writer, transforms) || {};
