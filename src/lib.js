@@ -164,8 +164,8 @@ var last = exports.last = function (array, n) {
 
 // {obj} -> {obj}
 var nullify = exports.nullify = function (obj) {
-  traverse(obj, function(source, n) {
-    source[n] = isArray(source[n]) ? [] : null;
+  traverse(obj, function(_obj, n) {
+    _obj[n] = isArray(_obj[n]) ? [] : null;
   });
   return obj
 };
