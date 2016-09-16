@@ -5,9 +5,9 @@ module.exports = function () {
 
   function getTransformIndex (obj) {
     var index = {};
-    lib.traverse (obj, function (source, n) {
-      var path = lib.findPath(reader, source[n]),
-        fn = lib.isFunction(source[n]) ? source[n] : lib.identity;
+    lib.traverse (obj, function (_obj, n) {
+      var path = lib.findPath(reader, _obj[n]),
+        fn = lib.isFunction(_obj[n]) ? _obj[n] : lib.identity;
       index[pathToKey(path)] = fn; 
     });
     return index;
@@ -35,7 +35,11 @@ module.exports = function () {
   }
 
   function pathToKey (path) {
-    return path.join(':%:');
+    return path.join('::||');
+  }
+
+  function keyToPath (key) {
+    return key.split('::||');
   }
 
   function getPathsForObj (reader, obj) {
@@ -75,8 +79,8 @@ module.exports = function () {
         var mapFn = f(readerVal, source[n][0]);
         var mergeFn = function (left, right) {
           var newObj = mapFn(left);
-          return lib.traverse(newObj, function(source, n, target) {
-            if (!lib.isNull(source[n])) target[n] = source[n];
+          return lib.traverse(newObj, function(_newObj, n, target) {
+            if (!lib.isNull(_newObj[n])) target[n] = _newObj[n];
           }, right);
         };
         index[pathToKey(paths[i][0])] = lib.delay(getAssigner(source, n, 
@@ -87,13 +91,13 @@ module.exports = function () {
     }
   }
 
-  function indexNonArrayMaps (index, paths, source, n, reader, writer, transforms) {
+  function indexNonArrayMaps (index, paths, _writer, n, reader, writer, transforms) {
     for (var na in paths) {
       var nonArrayPath = paths[na];
       var readerVal = lib.readPath(reader, nonArrayPath);
       var keyToWrite = function() {
-        for (var sn in source[n][0]) {
-          if (source[n][0][sn] === readerVal) return sn;
+        for (var sn in _writer[n][0]) {
+          if (_writer[n][0][sn] === readerVal) return sn;
         }
       }();
       var mapFn = function (val, obj, key) {
@@ -104,13 +108,13 @@ module.exports = function () {
           }
         });
       };
-      var assigner = lib.delay(getAssigner(source, n, [mapFn]));
+      var assigner = lib.delay(getAssigner(_writer, n, [mapFn]));
       index[pathToKey(nonArrayPath)] = assigner;
     } 
   }
 
-  function indexCollection (index, source, n, reader, writer, transforms) {
-    var paths = getPaths(reader, source[n]),
+  function indexCollection (index, _writer, n, reader, writer, transforms) {
+    var paths = getPaths(reader, _writer[n]),
       arrayPaths = paths.arrays,
       nonArrayPaths = paths.nonArrays,
       pathGroups = lib.groupArrays(arrayPaths).sort(function (a,b){
@@ -120,40 +124,43 @@ module.exports = function () {
       var topPath = pathGroups[0], 
         otherPaths = pathGroups.slice(1);
       if (topPath.length) 
-        indexArrayMap(index, pathToKey(topPath[0]), source, n, lib.readPath(reader, topPath[0]), source[n]);
+        indexArrayMap(index, pathToKey(topPath[0]), _writer, n, lib.readPath(reader, topPath[0]), _writer[n]);
       if (otherPaths.length)
-        indexArrayMerges(index, otherPaths, source, n, reader, writer, transforms);
+        indexArrayMerges(index, otherPaths, _writer, n, reader, writer, transforms);
     }
     if (nonArrayPaths.length) {
-      indexNonArrayMaps (index, nonArrayPaths, source, n, reader, writer, transforms);
+      indexNonArrayMaps (index, nonArrayPaths, _writer, n, reader, writer, transforms);
     }
   }
 
   function getMapIndex (reader, writer, transforms) {
-    return lib.traverse (writer, function (source, n, index) {
-      if (lib.isArray(source[n])) {
-        if (lib.isObject(source[n][0])) {
-          indexCollection(index, source, n, reader, writer, transforms);
+    return lib.traverse (writer, function (_writer, n, index) {
+      if (lib.isArray(_writer[n])) {
+        if (lib.isObject(_writer[n][0])) {
+          indexCollection(index, _writer, n, reader, writer, transforms);
         }
       } else {
-        var path = lib.findPath(reader, source[n]);
+        var path = lib.findPath(reader, _writer[n]);
         var readerVal = lib.readPath(reader, path);
-        transforms = lib.isFunction(readerVal) ? transforms.concat(readerVal) : transforms;
-        index[pathToKey(path)] = getAssigner(source, n, transforms);
+        if (path && readerVal) {
+          transforms = lib.isFunction(readerVal) ? transforms.concat(readerVal) : transforms;
+          index[pathToKey(path)] = getAssigner(_writer, n, transforms);
+        } 
       }
     }, {});
   }
 
   function mapper (reader, writer, transforms) {
     var index = getMapIndex (reader, writer, transforms) || {};
-    return function (input) {
+    return function (obj) {
       var queue = [];
       writer = lib.nullify(writer);
-      lib.traverse(input, function(source, n, target, path) {
-        var writeFn = index[pathToKey(path)];
+      lib.traverse(index, function(_index, n) {
+        var writeFn = _index[n];
+        var val = lib.readPath(obj, keyToPath(n));
         if (lib.isFunction(writeFn) && writeFn.name === 'delayed')
-          queue.push(writeFn, source[n]);
-        if (lib.isFunction(writeFn)) writeFn(source[n]);
+          queue.push(writeFn, val);
+        if (lib.isFunction(writeFn)) writeFn(val);
       }, writer);
       for (var i = 0; i < queue.length; i+=2)
         queue[i]().call(null, queue[i+1]);
