@@ -64,14 +64,16 @@ var distribute = exports.distribute = function (source, target, fn) {
 // {}, val -> [path]
 var findPath = exports.findPath = function (obj, val, includeArrays) {
   var path = [];
+  val = isFunction(val) ? val.name : val;
   function visit(source) {
     for (var n in source) {
+      var sourceName = isFunction(source[n]) ? source[n].name : source[n];
       path.push(n);
-      if (source[n] === val) return true; 
-      if (isObject(source[n])) 
-        if (visit(source[n])) return true;
-      if (includeArrays && isArray(source[n]))
-        if (visit(source[n])) return true;
+      if (sourceName === val) return true; 
+      if (isObject(sourceName)) 
+        if (visit(sourceName)) return true;
+      if (includeArrays && isArray(sourceName))
+        if (visit(sourceName)) return true;
       path.pop();
     }
   }
@@ -88,19 +90,24 @@ var gate = exports.gate = function (val) {
 
 // [[arrays]] -> [[groups]]
 var groupArrays = exports.groupArrays = function (arrays) {
-  var results = [], result, match;
+  var groups = [];
   arrays = arrays.slice(0);
 
   while (arrays.length) {
-    match = arrays.shift();
-    result = [match];
-    for (var i in arrays) {
-      if (arraysAreEqual(arrays[i], match))
-        result = result.concat(arrays.splice(i, 1));
+    var array = arrays.pop();
+    if (!groups.length) {
+      groups.push([array]);
+      continue
     }
-    results.push(result);
+    for (var i in groups) {
+      if (arraysAreEqual(array, groups[i][0])) {
+        groups[i].push(array);
+      } else {
+        groups.push([array]);
+      }
+    }
   }
-  return results;
+  return groups;
 };
 
 // val -> val 
