@@ -35,7 +35,11 @@ module.exports = function () {
   }
 
   function pathToKey (path) {
-    return path.join(':%:');
+    return path.join('::||');
+  }
+
+  function keyToPath (key) {
+    return key.split('::||');
   }
 
   function getPathsForObj (reader, obj) {
@@ -130,30 +134,33 @@ module.exports = function () {
   }
 
   function getMapIndex (reader, writer, transforms) {
-    return lib.traverse (writer, function (source, n, index) {
-      if (lib.isArray(source[n])) {
-        if (lib.isObject(source[n][0])) {
-          indexCollection(index, source, n, reader, writer, transforms);
+    return lib.traverse (writer, function (_writer, n, index) {
+      if (lib.isArray(_writer[n])) {
+        if (lib.isObject(_writer[n][0])) {
+          indexCollection(index, _writer, n, reader, writer, transforms);
         }
       } else {
-        var path = lib.findPath(reader, source[n]);
+        var path = lib.findPath(reader, _writer[n]);
         var readerVal = lib.readPath(reader, path);
-        transforms = lib.isFunction(readerVal) ? transforms.concat(readerVal) : transforms;
-        index[pathToKey(path)] = getAssigner(source, n, transforms);
+        if (path && readerVal) {
+          transforms = lib.isFunction(readerVal) ? transforms.concat(readerVal) : transforms;
+          index[pathToKey(path)] = getAssigner(_writer, n, transforms);
+        } 
       }
     }, {});
   }
 
   function mapper (reader, writer, transforms) {
     var index = getMapIndex (reader, writer, transforms) || {};
-    return function (input) {
+    return function (obj) {
       var queue = [];
       writer = lib.nullify(writer);
-      lib.traverse(input, function(source, n, target, path) {
-        var writeFn = index[pathToKey(path)];
+      lib.traverse(index, function(idx, n) {
+        var writeFn = idx[n];
+        var val = lib.readPath(obj, keyToPath(n));
         if (lib.isFunction(writeFn) && writeFn.name === 'delayed')
-          queue.push(writeFn, source[n]);
-        if (lib.isFunction(writeFn)) writeFn(source[n]);
+          queue.push(writeFn, val);
+        if (lib.isFunction(writeFn)) writeFn(val);
       }, writer);
       for (var i = 0; i < queue.length; i+=2)
         queue[i]().call(null, queue[i+1]);
