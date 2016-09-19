@@ -134,6 +134,7 @@ module.exports = function () {
   }
 
   function getMapIndex (reader, writer, transforms) {
+    transforms = transforms || [];
     return lib.traverse (writer, function (_writer, n, index) {
       if (lib.isArray(_writer[n])) {
         if (lib.isObject(_writer[n][0])) {
@@ -143,8 +144,8 @@ module.exports = function () {
         var path = lib.findPath(reader, _writer[n]);
         var readerVal = lib.readPath(reader, path);
         if (path && readerVal) {
-          transforms = lib.isFunction(readerVal) ? transforms.concat(readerVal) : transforms;
-          index[pathToKey(path)] = getAssigner(_writer, n, transforms);
+          var transform = lib.isFunction(readerVal) ? readerVal : [];
+          index[pathToKey(path)] = getAssigner(_writer, n, transforms.concat(transform));
         } 
       }
     }, {});
