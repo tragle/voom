@@ -8,16 +8,16 @@ You supply example values and voom computes a function for converting similar va
 
 ### Installation
 
-`require` voom and call the `f` function.
+`require` voom, which exposes the `f` function.
 
 ### Transforming objects
 
 In general, objects are mapped structurally based on shared values in two object literals, or schemas.
 
 ```javascript
-var f = require('voom').f,
-    schemaA = {a: 'foo', b: {c: 'bar'}},
-    schemaB = {y: 'foo', z: 'bar'};
+var f = require('voom').f;
+var schemaA = {a: 'foo', b: {c: 'bar'}};
+var schemaB = {y: 'foo', z: 'bar'};
     
 var transform = f(schemaA, schemaB);
 
@@ -27,11 +27,11 @@ var result = transform({a: 'abc', b: {c: 'def'}});
 
 The function returned above will always produce an object with `y` and `z` properties, regardless of any "extra" properties in its input. 
 
-Taking advantage of this, if we supply a single schema, we get a function that trims unwanted properties off of objects.
+Taking advantage of this, if we supply a single schema, we get a function that trims extra properties from objects.
 
 ```javascript
-var s1 = {a: 'foo', b: 'bar'},
-fn = f(s1);
+var s1 = {a: 'foo', b: 'bar'};
+var fn = f(s1);
 
 result = fn({a: 'abc', b: 'def', c: 'ghi'});
 // {a: 'abc', b: 'def'}
@@ -72,7 +72,7 @@ var resultA = fn('A');
 // resultA = 'A'
 ```
 
-#### Transforms
+### Transforms
 
 Any value in any schema may be a function, and data will be passed through that function before being returned.  
 
@@ -81,9 +81,9 @@ function bar (val) {
   if ((val) === 'def') return 'DEF';
 }
 
-var s1 = {a: 'foo', b: {c: bar}},
-  s2 = {y: 'foo', z: 'bar'};
-fn = f(s1, s2);
+var s1 = {a: 'foo', b: {c: bar}};
+var s2 = {y: 'foo', z: 'bar'};
+var fn = f(s1, s2);
 
 result = fn({a: 'abc', b: {c: 'def'}});
 // {y: 'abc', z: 'DEF'}
@@ -102,9 +102,9 @@ var stringer = function (x) {
   if (x) return x.toString();
 }
 
-fn = f(2, doubler, stringer);
+var fn = f(2, doubler, stringer);
 
-result = fn(2);
+var result = fn(2);
 // "4"
 ```
 
@@ -116,11 +116,11 @@ function upper (val) {
   return val.toUpperCase();
 }
 
-var s1 = {a: 'foo', b: {c: 'bar'}},
-  s2 = {y: 'foo', z: 'bar'};
-fn = f(s1, upper, s2);
+var s1 = {a: 'foo', b: {c: 'bar'}};
+var s2 = {y: 'foo', z: 'bar'};
+var fn = f(s1, upper, s2);
 
-result = fn({a: 'abc', b: {c: 'def'}});
+var result = fn({a: 'abc', b: {c: 'def'}});
 // {y: 'ABC', z: 'DEF'}
 ```
 
@@ -132,9 +132,9 @@ var doubler = function (x) {
 var stringer = function (x) {
   if (x) return x.toString();
 }
-fn = f(doubler, stringer);
+var fn = f(doubler, stringer);
 
-result = fn(2);
+var result = fn(2);
 // "4"
 ```
 
@@ -143,33 +143,33 @@ result = fn(2);
 We can pass arrays directly to voom to compute a function that transforms collections.
 
 ```
-var s1 = [{a: 'foo', b: 'bar'}],
-  s2 = [{y: 'foo', z: 'bar'}];
-fn = f(s1, s2);
+var s1 = [{a: 'foo', b: 'bar'}];
+var s2 = [{y: 'foo', z: 'bar'}];
+var fn = f(s1, s2);
 
-result = fn([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
+var result = fn([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
 // [{y: 'abc', z: 'def'}, {y: 'ghi', z: 'jkl'}]
 ```
 
 Voom also computes functions to transform objects with embedded collections.
 
 ```javascript
-var s1 = {a: 1, b: [{c: 2}]},
-  s2 = {x: 1, y: [{z: 2}]};
-fn = f(s1, s2);
+var s1 = {a: 1, b: [{c: 2}]};
+var s2 = {x: 1, y: [{z: 2}]};
+var fn = f(s1, s2);
 
-result = fn({a: 9, b: [{c: 8}, {c: 45}]});
+var result = fn({a: 9, b: [{c: 8}, {c: 45}]});
 // {x: 9, y: [{z: 8}, {z: 45}]}
 ```
 
 This even works with multiple collections.
 
 ```javascript
-var s1 = {a: [{b: 1}], c: [{d: 2}]},
-  s2 = {x: [{y: 1, z: 2}]};
-fn = f(s1, s2);
+var s1 = {a: [{b: 1}], c: [{d: 2}]};
+var s2 = {x: [{y: 1, z: 2}]};
+var fn = f(s1, s2);
 
-result = fn({a: [{b: 101}, {b: 202}], c: [{d: 303}, {d: 404}]});
+var result = fn({a: [{b: 101}, {b: 202}], c: [{d: 303}, {d: 404}]});
 // {x: [{y: 101, z: 303}, {y: 202, z: 404}]}
 ```
 
@@ -199,7 +199,7 @@ var schemaB = {
   ]
 }
 
-fn = f(schemaA, schemaB);
+var fn = f(schemaA, schemaB);
 
 var dataIn = {
   name: 'Melissa Cromwell',
