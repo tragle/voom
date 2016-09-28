@@ -125,7 +125,7 @@ var result = fn({a: 'abc', b: {c: 'def'}});
 ```
 
 Provide only transform functions, and we get a function that pipes values through each transform.
-```
+```javascript
 var doubler = function (x) {
   if (x) return x * 2;
 };
@@ -142,7 +142,7 @@ var result = fn(2);
 
 We can pass arrays directly to voom to compute a function that transforms collections.
 
-```
+```javascript
 var s1 = [{a: 'foo', b: 'bar'}];
 var s2 = [{y: 'foo', z: 'bar'}];
 var fn = f(s1, s2);
