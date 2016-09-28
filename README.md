@@ -33,7 +33,7 @@ Taking advantage of this, if we supply a single schema, we get a function that t
 var s1 = {a: 'foo', b: 'bar'};
 var fn = f(s1);
 
-result = fn({a: 'abc', b: 'def', c: 'ghi'});
+var result = fn({a: 'abc', b: 'def', c: 'ghi'});
 // {a: 'abc', b: 'def'}
 ```
 
@@ -42,7 +42,7 @@ result = fn({a: 'abc', b: 'def', c: 'ghi'});
 If you supply two primitive values, voom computes a function that returns the second value if the first value is passed in. 
 
 ```javascript
-fn = f(1, 2);
+var fn = f(1, 2);
 var result1 = fn(1);
 var resultA = fn('A');
 
@@ -53,7 +53,7 @@ var resultA = fn('A');
 Or, supply a single primitive to get a function that returns that value when it is passed that value.
 
 ```javascript
-fn = f(1);
+var fn = f(1);
 var result1 = fn(1);
 var resultA = fn('A');
 
@@ -64,7 +64,7 @@ var resultA = fn('A');
 What happens if you supply nothing? You get an identity function, which simply returns its arguments.
 
 ```javascript
-fn = f();
+var fn = f();
 var result1 = fn(1);
 var resultA = fn('A');
 
@@ -85,7 +85,7 @@ var s1 = {a: 'foo', b: {c: bar}};
 var s2 = {y: 'foo', z: 'bar'};
 var fn = f(s1, s2);
 
-result = fn({a: 'abc', b: {c: 'def'}});
+var result = fn({a: 'abc', b: {c: 'def'}});
 // {y: 'abc', z: 'DEF'}
 ```
 
