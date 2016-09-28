@@ -10,7 +10,7 @@ You supply example values and voom computes a function for converting similar va
 
 `require` voom, which exposes the `f` function.
 
-### Transforming objects
+### Mapping objects
 
 In general, objects are mapped structurally based on shared values in two object literals, or schemas.
 
@@ -37,7 +37,7 @@ var result = fn({a: 'abc', b: 'def', c: 'ghi'});
 // {a: 'abc', b: 'def'}
 ```
 
-### Transforming primitives
+### Mapping primitives
 
 If you supply two primitive values, voom computes a function that returns the second value if the first value is passed in. 
 
@@ -138,7 +138,7 @@ var result = fn(2);
 // "4"
 ```
 
-### Arrays
+### Mapping Arrays
 
 We can pass arrays directly to voom to compute a function that transforms collections.
 
