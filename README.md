@@ -12,7 +12,7 @@ You supply example values and voom computes a function for converting similar va
 
 ### Mapping objects
 
-In general, objects are mapped structurally based on shared values in two object literals, or schemas.
+In general, objects are mapped structurally based on shared values in the leaf nodes of two object literals, or schemas.
 
 ```javascript
 var f = require('voom').f;
@@ -24,6 +24,8 @@ var transform = f(schemaA, schemaB);
 var result = transform({a: 'abc', b: {c: 'def'}});
 // {y: 'abc', z: 'def'}
 ```
+
+The `foo` value maps schemaA.a to schemaB.y, and the `bar` value maps schemaA.b.c to schemaB.z. The values need not be strings, but their string representations (or `name` in the case of functions) need to match to register a mapping with voom.
 
 The function returned above will always produce an object with `y` and `z` properties, regardless of any "extra" properties in its input. 
 
