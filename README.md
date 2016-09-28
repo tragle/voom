@@ -37,7 +37,7 @@ result = fn({a: 'abc', b: 'def', c: 'ghi'});
 // {a: 'abc', b: 'def'}
 ```
 
-# Transforming primitives
+### Transforming primitives
 
 If you supply two primitive values, voom computes a function that returns the second value if the first value is passed in. 
 
