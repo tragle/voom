@@ -72,3 +72,177 @@ var resultA = fn('A');
 // resultA = 'A'
 ```
 
+#### Transforms
+
+Any value in any schema may be a function, and data will be passed through that function before being returned.  
+
+```javascript
+function bar (val) {
+  if ((val) === 'def') return 'DEF';
+}
+
+var s1 = {a: 'foo', b: {c: bar}},
+  s2 = {y: 'foo', z: 'bar'};
+fn = f(s1, s2);
+
+result = fn({a: 'abc', b: {c: 'def'}});
+// {y: 'abc', z: 'DEF'}
+```
+
+Note that the `bar` function is matched with the `'bar'` string.
+
+Voom will pipe values through all transform functions from left to right.
+
+```javascript
+var doubler = function (x) {
+  if (x) return x * 2;
+};
+
+var stringer = function (x) {
+  if (x) return x.toString();
+}
+
+fn = f(2, doubler, stringer);
+
+result = fn(2);
+// "4"
+```
+
+All values in objects are piped through transforms.
+
+```javascript
+
+function upper (val) {
+  return val.toUpperCase();
+}
+
+var s1 = {a: 'foo', b: {c: 'bar'}},
+  s2 = {y: 'foo', z: 'bar'};
+fn = f(s1, upper, s2);
+
+result = fn({a: 'abc', b: {c: 'def'}});
+// {y: 'ABC', z: 'DEF'}
+```
+
+Provide only transform functions, and we get a function that pipes values through each transform.
+```
+var doubler = function (x) {
+  if (x) return x * 2;
+};
+var stringer = function (x) {
+  if (x) return x.toString();
+}
+fn = f(doubler, stringer);
+
+result = fn(2);
+// "4"
+```
+
+### Arrays
+
+We can pass arrays directly to voom to compute a function that transforms collections.
+
+```
+var s1 = [{a: 'foo', b: 'bar'}],
+  s2 = [{y: 'foo', z: 'bar'}];
+fn = f(s1, s2);
+
+result = fn([{a: 'abc', b: 'def'}, {a: 'ghi', b: 'jkl'}]);
+// [{y: 'abc', z: 'def'}, {y: 'ghi', z: 'jkl'}]
+```
+
+Voom also computes functions to transform objects with embedded collections.
+
+```javascript
+var s1 = {a: 1, b: [{c: 2}]},
+  s2 = {x: 1, y: [{z: 2}]};
+fn = f(s1, s2);
+
+result = fn({a: 9, b: [{c: 8}, {c: 45}]});
+// {x: 9, y: [{z: 8}, {z: 45}]}
+```
+
+This even works with multiple collections.
+
+```javascript
+var s1 = {a: [{b: 1}], c: [{d: 2}]},
+  s2 = {x: [{y: 1, z: 2}]};
+fn = f(s1, s2);
+
+result = fn({a: [{b: 101}, {b: 202}], c: [{d: 303}, {d: 404}]});
+// {x: [{y: 101, z: 303}, {y: 202, z: 404}]}
+```
+
+Here's a more complex example, where values in an object are distributed to a collection embedded in the target object.
+
+```javascript
+var schemaA = {
+  name: 'Ziggy Ragle',
+  age: 16,
+  classes: [
+    {
+      name: 'Geometry',
+      instructor: 'Smith',
+    }
+  ],
+  number: '001248',
+  grade: 10
+};
+
+var schemaB = {
+  number: '001248',
+  coursework: [
+    {
+      course: 'Geometry',
+      student: 'Ziggy Ragle',
+    }
+  ]
+}
+
+fn = f(schemaA, schemaB);
+
+var dataIn = {
+  name: 'Melissa Cromwell',
+  age: 17,
+  classes: [
+    {
+      name: 'Art',
+      instructor: 'Puckett',
+      grades: ['A', 'A+']
+    },
+    {
+      name: 'English',
+      instructor: 'Ferraro',
+      grades: ['B', 'B+']
+    },
+    {
+      name: 'Home Economics',
+      instructor: 'Lopez',
+      grades: ['C', 'C+']
+    }
+  ],
+  number: '092212',
+  grade: 12
+};
+
+var result = fn(dataIn);
+/*
+{
+  number: '092212',
+  coursework: [
+    {
+      course: 'Art',
+      student: 'Melissa Cromwell',
+    },
+    {
+      course: 'English',
+      student:'Melissa Cromwell',
+    },
+    {
+      course: 'Home Economics',
+      student:'Melissa Cromwell',
+    }
+  ]
+}
+*/
+```
