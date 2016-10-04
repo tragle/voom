@@ -1,6 +1,6 @@
 {
   "name": "voom",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "value oriented object map",
   "main": "index.js",
   "scripts": {
