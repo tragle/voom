@@ -180,8 +180,11 @@ module.exports = function () {
     if (lib.isFunction(reader) && args.length === 1) 
       return reader;
 
-    if (lib.isFunction(reader) && lib.isFunction(writer)) 
+    if (lib.every(args, lib.isFunction.bind(lib)))
       return lib.pipe(reader, getTransform(transforms), writer);
+
+    if (lib.isFunction(writer))
+      return lib.pipe(f.apply(null, args.slice(0, args.length - 1)), writer);
 
     if (lib.isFunction(reader) && lib.isPrimitive(writer)) 
       return lib.pipe(reader, getTransform(transforms), lib.value(writer));
@@ -203,9 +206,6 @@ module.exports = function () {
 
     if (lib.isPrimitive(reader) && args.length === 1) 
       return lib.gate(reader);
-
-    if (lib.isPrimitive(reader) && lib.isFunction(writer)) 
-      return lib.pipe(lib.gate(reader), getTransform(transforms), writer);
 
     if (lib.isPrimitive(reader) && lib.isPrimitive(writer)) 
       return lib.pipe(lib.gate(reader), getTransform(transforms), lib.value(writer));

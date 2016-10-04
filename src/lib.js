@@ -61,6 +61,14 @@ var distribute = exports.distribute = function (source, target, fn) {
   return results;
 };
 
+// [list], pred -> bool
+var every = exports.every = function (list, pred) {
+  for (var i = 0; i < list.length; i++) {
+    if (!pred(list[i])) return false;
+  }
+  return true;
+}
+
 // {}, val -> [path]
 var findPath = exports.findPath = function (obj, val, includeArrays) {
   var path = [];
