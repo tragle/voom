@@ -186,8 +186,8 @@ module.exports = function () {
     if (lib.isFunction(writer))
       return lib.pipe(f.apply(null, args.slice(0, args.length - 1)), writer);
 
-    if (lib.isFunction(reader) && lib.isPrimitive(writer)) 
-      return lib.pipe(reader, getTransform(transforms), lib.value(writer));
+    if (lib.isFunction(reader))
+      return lib.pipe(reader, f.apply(null, args.slice(1)));
 
     if (lib.isObject(reader) && args.length === 1) 
       return mapper(reader, reader);

@@ -84,8 +84,8 @@ describe('f', function() {
     var stringer = function (x) {
       if (x) return x.toString();
     }
-    fn = voom.f(2, doubler, stringer);
-    result = fn(2);
+    fn = voom.f(doubler, 2, doubler, stringer);
+    result = fn(1);
 
     expect(result).to.equal("4");
     
